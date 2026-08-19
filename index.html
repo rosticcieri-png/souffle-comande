@@ -219,6 +219,8 @@
     transition: background 0.15s ease;
   }
   .send-btn.small{ background: var(--wood-lighter); border: 1px solid var(--ember); }
+  .send-btn.sospeso-btn{ border-color: var(--gold); color: var(--gold); background: var(--wood-lighter); }
+  .send-btn.sospeso-btn:hover{ background: var(--gold); color: var(--ink); }
   .send-btn:hover{ background: var(--ember-dark); }
   .send-btn.small:hover{ background: var(--ember); }
   .send-btn:disabled{ background:#5a4a37; border-color:#5a4a37; cursor:not-allowed; }
@@ -555,6 +557,9 @@
       <button class="send-btn small" id="sendClienteBtn">🧾 Solo cliente</button>
       <button class="send-btn" id="sendEntrambeBtn">🖨️ Entrambe</button>
     </div>
+    <div class="send-row">
+      <button class="send-btn small sospeso-btn" id="sendSospesoBtn">📌 Salva senza stampare (conto sospeso)</button>
+    </div>
   </div>
 
   <div class="panel menu-panel">
@@ -616,36 +621,36 @@ const CATALOGO = [
   { id:'calzone_forno', base:'Ripieno al forno', price:7.00, category:'🥐 Ripieno al forno', voice:['ripieno al forno','ripieno','calzone al forno','calzone'], flavorFree:true },
 
   // 🥙 SALTIMBOCCA
-  { id:'saltimbocca_romano_meta', base:'Saltimbocca Romano', note:'metà', price:5.00, category:'🥙 Saltimbocca', voice:['saltimbocca romano','romano'] },
-  { id:'saltimbocca_romano_intero', base:'Saltimbocca Romano', note:'intero', price:10.00, category:'🥙 Saltimbocca', voice:['saltimbocca romano intero','romano intero'] },
-  { id:'saltimbocca_calabrese_meta', base:'Saltimbocca Calabrese', note:'metà', price:5.00, category:'🥙 Saltimbocca', voice:['calabres'] },
-  { id:'saltimbocca_calabrese_intero', base:'Saltimbocca Calabrese', note:'intero', price:10.00, category:'🥙 Saltimbocca', voice:['calabrese intero'] },
-  { id:'saltimbocca_parigino_meta', base:'Saltimbocca Parigino', note:'metà', price:5.00, category:'🥙 Saltimbocca', voice:['parigin'] },
-  { id:'saltimbocca_parigino_intero', base:'Saltimbocca Parigino', note:'intero', price:10.00, category:'🥙 Saltimbocca', voice:['parigino intero'] },
-  { id:'saltimbocca_contadino_meta', base:'Saltimbocca Contadino', note:'metà', price:6.00, category:'🥙 Saltimbocca', voice:['contadin'] },
-  { id:'saltimbocca_contadino_intero', base:'Saltimbocca Contadino', note:'intero', price:12.00, category:'🥙 Saltimbocca', voice:['contadino intero'] },
-  { id:'saltimbocca_friarielli_meta', base:'Saltimbocca Sacicc e friarielli', note:'metà', price:7.00, category:'🥙 Saltimbocca', voice:['sacicc','friarielli'] },
-  { id:'saltimbocca_friarielli_intero', base:'Saltimbocca Sacicc e friarielli', note:'intero', price:14.00, category:'🥙 Saltimbocca', voice:['sacicc intero','friarielli intero'] },
-  { id:'saltimbocca_melanzana_meta', base:'Saltimbocca Melanzana', note:'metà', price:6.00, category:'🥙 Saltimbocca', voice:['melanzan'] },
-  { id:'saltimbocca_melanzana_intero', base:'Saltimbocca Melanzana', note:'intero', price:12.00, category:'🥙 Saltimbocca', voice:['melanzana intero'] },
-  { id:'saltimbocca_parmigiana_meta', base:'Saltimbocca Parmigiana', note:'metà', price:7.00, category:'🥙 Saltimbocca', voice:['parmigian'] },
-  { id:'saltimbocca_parmigiana_intero', base:'Saltimbocca Parmigiana', note:'intero', price:14.00, category:'🥙 Saltimbocca', voice:['parmigiana intero'] },
-  { id:'saltimbocca_capriccioso_meta', base:'Saltimbocca Capriccioso', note:'metà', price:7.00, category:'🥙 Saltimbocca', voice:['capriccios'] },
-  { id:'saltimbocca_capriccioso_intero', base:'Saltimbocca Capriccioso', note:'intero', price:14.00, category:'🥙 Saltimbocca', voice:['capriccioso intero'] },
+  { id:'saltimbocca_romano_meta', base:'Romano', note:'metà', price:5.00, category:'🥙 Saltimbocca', voice:['saltimbocca romano','romano'] },
+  { id:'saltimbocca_romano_intero', base:'Romano', note:'intero', price:10.00, category:'🥙 Saltimbocca', voice:['saltimbocca romano intero','romano intero'] },
+  { id:'saltimbocca_calabrese_meta', base:'Calabrese', note:'metà', price:5.00, category:'🥙 Saltimbocca', voice:['calabres'] },
+  { id:'saltimbocca_calabrese_intero', base:'Calabrese', note:'intero', price:10.00, category:'🥙 Saltimbocca', voice:['calabrese intero'] },
+  { id:'saltimbocca_parigino_meta', base:'Parigino', note:'metà', price:5.00, category:'🥙 Saltimbocca', voice:['parigin'] },
+  { id:'saltimbocca_parigino_intero', base:'Parigino', note:'intero', price:10.00, category:'🥙 Saltimbocca', voice:['parigino intero'] },
+  { id:'saltimbocca_contadino_meta', base:'Contadino', note:'metà', price:6.00, category:'🥙 Saltimbocca', voice:['contadin'] },
+  { id:'saltimbocca_contadino_intero', base:'Contadino', note:'intero', price:12.00, category:'🥙 Saltimbocca', voice:['contadino intero'] },
+  { id:'saltimbocca_friarielli_meta', base:'Sacicc e friarielli', note:'metà', price:7.00, category:'🥙 Saltimbocca', voice:['sacicc','friarielli'] },
+  { id:'saltimbocca_friarielli_intero', base:'Sacicc e friarielli', note:'intero', price:14.00, category:'🥙 Saltimbocca', voice:['sacicc intero','friarielli intero'] },
+  { id:'saltimbocca_melanzana_meta', base:'Melanzana', note:'metà', price:6.00, category:'🥙 Saltimbocca', voice:['melanzan'] },
+  { id:'saltimbocca_melanzana_intero', base:'Melanzana', note:'intero', price:12.00, category:'🥙 Saltimbocca', voice:['melanzana intero'] },
+  { id:'saltimbocca_parmigiana_meta', base:'Parmigiana', note:'metà', price:7.00, category:'🥙 Saltimbocca', voice:['parmigian'] },
+  { id:'saltimbocca_parmigiana_intero', base:'Parmigiana', note:'intero', price:14.00, category:'🥙 Saltimbocca', voice:['parmigiana intero'] },
+  { id:'saltimbocca_capriccioso_meta', base:'Capriccioso', note:'metà', price:7.00, category:'🥙 Saltimbocca', voice:['capriccios'] },
+  { id:'saltimbocca_capriccioso_intero', base:'Capriccioso', note:'intero', price:14.00, category:'🥙 Saltimbocca', voice:['capriccioso intero'] },
 
   // 🥗 SALTIMBOCCA VEGETARIANO
-  { id:'saltimbocca_veg_caprese_meta', base:'Saltimbocca Caprese veg.', note:'metà', price:5.00, category:'🥗 Saltimbocca vegetariano', voice:['caprese vegetarian'] },
-  { id:'saltimbocca_veg_caprese_intero', base:'Saltimbocca Caprese veg.', note:'intero', price:10.00, category:'🥗 Saltimbocca vegetariano', voice:['caprese vegetariano intero'] },
-  { id:'saltimbocca_veg_romano_meta', base:'Saltimbocca Romano veg.', note:'metà', price:6.00, category:'🥗 Saltimbocca vegetariano', voice:['romano vegetarian'] },
-  { id:'saltimbocca_veg_romano_intero', base:'Saltimbocca Romano veg.', note:'intero', price:12.00, category:'🥗 Saltimbocca vegetariano', voice:['romano vegetariano intero'] },
-  { id:'saltimbocca_veg_parmigiana_meta', base:'Saltimbocca Parmigiana veg.', note:'metà', price:6.00, category:'🥗 Saltimbocca vegetariano', voice:['parmigiana vegetarian'] },
-  { id:'saltimbocca_veg_parmigiana_intero', base:'Saltimbocca Parmigiana veg.', note:'intero', price:12.00, category:'🥗 Saltimbocca vegetariano', voice:['parmigiana vegetariano intero'] },
-  { id:'saltimbocca_veg_scarola_meta', base:'Saltimbocca Scarola veg.', note:'metà', price:6.00, category:'🥗 Saltimbocca vegetariano', voice:['scarola vegetarian'] },
-  { id:'saltimbocca_veg_scarola_intero', base:'Saltimbocca Scarola veg.', note:'intero', price:12.00, category:'🥗 Saltimbocca vegetariano', voice:['scarola vegetariano intero'] },
-  { id:'saltimbocca_veg_melanzana_meta', base:'Saltimbocca Melanzana veg.', note:'metà', price:6.50, category:'🥗 Saltimbocca vegetariano', voice:['melanzana vegetarian'] },
-  { id:'saltimbocca_veg_melanzana_intero', base:'Saltimbocca Melanzana veg.', note:'intero', price:13.00, category:'🥗 Saltimbocca vegetariano', voice:['melanzana vegetariano intero'] },
-  { id:'saltimbocca_veg_friarielli_meta', base:'Saltimbocca Friarielli veg.', note:'metà', price:6.00, category:'🥗 Saltimbocca vegetariano', voice:['friarielli vegetarian'] },
-  { id:'saltimbocca_veg_friarielli_intero', base:'Saltimbocca Friarielli veg.', note:'intero', price:12.00, category:'🥗 Saltimbocca vegetariano', voice:['friarielli vegetariano intero'] },
+  { id:'saltimbocca_veg_caprese_meta', base:'Caprese veg.', note:'metà', price:5.00, category:'🥗 Saltimbocca vegetariano', voice:['caprese vegetarian'] },
+  { id:'saltimbocca_veg_caprese_intero', base:'Caprese veg.', note:'intero', price:10.00, category:'🥗 Saltimbocca vegetariano', voice:['caprese vegetariano intero'] },
+  { id:'saltimbocca_veg_romano_meta', base:'Romano veg.', note:'metà', price:6.00, category:'🥗 Saltimbocca vegetariano', voice:['romano vegetarian'] },
+  { id:'saltimbocca_veg_romano_intero', base:'Romano veg.', note:'intero', price:12.00, category:'🥗 Saltimbocca vegetariano', voice:['romano vegetariano intero'] },
+  { id:'saltimbocca_veg_parmigiana_meta', base:'Parmigiana veg.', note:'metà', price:6.00, category:'🥗 Saltimbocca vegetariano', voice:['parmigiana vegetarian'] },
+  { id:'saltimbocca_veg_parmigiana_intero', base:'Parmigiana veg.', note:'intero', price:12.00, category:'🥗 Saltimbocca vegetariano', voice:['parmigiana vegetariano intero'] },
+  { id:'saltimbocca_veg_scarola_meta', base:'Scarola veg.', note:'metà', price:6.00, category:'🥗 Saltimbocca vegetariano', voice:['scarola vegetarian'] },
+  { id:'saltimbocca_veg_scarola_intero', base:'Scarola veg.', note:'intero', price:12.00, category:'🥗 Saltimbocca vegetariano', voice:['scarola vegetariano intero'] },
+  { id:'saltimbocca_veg_melanzana_meta', base:'Melanzana veg.', note:'metà', price:6.50, category:'🥗 Saltimbocca vegetariano', voice:['melanzana vegetarian'] },
+  { id:'saltimbocca_veg_melanzana_intero', base:'Melanzana veg.', note:'intero', price:13.00, category:'🥗 Saltimbocca vegetariano', voice:['melanzana vegetariano intero'] },
+  { id:'saltimbocca_veg_friarielli_meta', base:'Friarielli veg.', note:'metà', price:6.00, category:'🥗 Saltimbocca vegetariano', voice:['friarielli vegetarian'] },
+  { id:'saltimbocca_veg_friarielli_intero', base:'Friarielli veg.', note:'intero', price:12.00, category:'🥗 Saltimbocca vegetariano', voice:['friarielli vegetariano intero'] },
 
   // 🍟 FRIGGITORIA
   { id:'pizza_fritta', base:'Pizza fritta', price:4.50, category:'🍟 Friggitoria', voice:['pizza fritta'] },
@@ -893,7 +898,7 @@ function renderCurrent(){
   const righe = currentOrder.filter(l => l.qty > 0);
   if(righe.length === 0) editandoLineId = null;
 
-  ['sendCucinaBtn','sendClienteBtn','sendEntrambeBtn'].forEach(id => {
+  ['sendCucinaBtn','sendClienteBtn','sendEntrambeBtn','sendSospesoBtn'].forEach(id => {
     document.getElementById(id).disabled = righe.length === 0;
   });
   renderReceiptPreview();
@@ -1476,6 +1481,13 @@ document.getElementById('sendClienteBtn').addEventListener('click', async () => 
 document.getElementById('sendEntrambeBtn').addEventListener('click', async () => {
   const ordine = finalizzaOrdine();
   if(ordine) await stampaOrdine('entrambe', ordine);
+});
+document.getElementById('sendSospesoBtn').addEventListener('click', () => {
+  // Salva l'ordine nella bacheca (come un conto sospeso, es. tavoli fuori
+  // con prodotti presi in vetrina) SENZA stampare nulla. Si stampa solo più
+  // tardi, quando il cliente paga, riaprendo l'ordine con la matita ✎ e poi
+  // usando i pulsanti di stampa normali.
+  finalizzaOrdine();
 });
 
 // ---------------------------------------------------------------------
