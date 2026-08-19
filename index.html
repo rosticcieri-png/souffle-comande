@@ -272,11 +272,12 @@
     box-shadow: 0 6px 14px rgba(0,0,0,0.35);
   }
   .receipt .r-head{ text-align:center; font-weight:600; margin-bottom:2px; }
+  .receipt .r-cliente{ text-align:center; font-size: 13px; color: var(--ink-soft); margin-bottom: 4px; }
   .receipt .r-meta{ text-align:center; font-size:11px; color: var(--ink-soft); margin-bottom:10px; }
   .receipt hr{ border:none; border-top: 1px dashed var(--ink-soft); margin: 8px 0; }
   .receipt .r-cat{ font-weight:700; margin: 10px 0 4px; }
-  .receipt .r-row{ display:flex; justify-content:space-between; align-items:center; gap: 10px; padding: 4px 0; }
-  .receipt .r-row-controls{ display:flex; align-items:center; gap: 6px; flex-shrink:0; }
+  .receipt .r-row{ display:flex; flex-wrap:wrap; align-items:center; gap: 4px 10px; padding: 6px 0; }
+  .receipt .r-row-controls{ display:flex; align-items:center; gap: 6px; flex-shrink:0; flex-basis:100%; justify-content:flex-start; }
   .receipt button.r-step{
     width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--ink-soft);
     background: transparent; color: var(--ink); cursor:pointer; font-size: 14px; line-height:1;
@@ -403,6 +404,7 @@
   }
   .order-card .top{ display:flex; align-items:center; gap:12px; }
   .order-card .num{ font-family:'Big Shoulders Display', sans-serif; font-weight:800; font-size:30px; color: var(--gold); }
+  .order-card .cliente{ font-size: 16px; color: var(--paper); font-weight:600; }
   .order-card.late .num{ color: var(--ember); }
   .order-card .time{ display:none; } /* nascosto per risparmiare spazio nella striscia sottile */
   .order-card .elapsed{ font-size: 20px; color:#c9bda3; white-space:nowrap; }
@@ -426,6 +428,22 @@
     font-size: 12px; color:#a8977d; font-style: italic;
     margin-bottom: 12px; line-height: 1.4;
   }
+
+  .cliente-row{
+    display:flex; align-items:center; gap: 10px;
+    margin-bottom: 12px;
+  }
+  .cliente-row input{
+    flex: 1;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--wood-lighter);
+    color: var(--paper);
+    font-size: 15px;
+    font-family: 'Inter', sans-serif;
+  }
+  .cliente-row input::placeholder{ color: #8a7c65; }
 
   /* MICROFONO BREVE (dentro l'editor della variazione) */
   .mic-btn{
@@ -517,6 +535,11 @@
       <h2 id="orderPanelTitle">Ordine in corso</h2>
       <div class="edit-banner" id="editBanner" style="display:none;"></div>
 
+      <div class="cliente-row">
+        <input type="text" id="nomeClienteInput" placeholder="Nome cliente (facoltativo)" autocomplete="off">
+        <button id="nomeClienteMic" class="mic-btn" title="Detta il nome del cliente">🎤</button>
+      </div>
+
       <div class="hint-tasti">Tocca un prodotto dal menù per aggiungerlo. Su ogni riga qui sotto puoi poi toccare ✎ per dire o scrivere una variazione (es. "senza origano", "con pepe").</div>
 
       <div class="tabs">
@@ -583,8 +606,8 @@ const CATALOGO = [
   { id:'souffle_pizza', base:'Soufflé', price:7.50, category:'🧀 Pizze bianche', voice:['souffl','soffl'] },
 
   // 📏 METRO E MIGNON
-  { id:'metro_margherita', base:'¼ Metro Margherita', price:12.00, category:'📏 Metro e mignon', voice:['metro margherita'] },
-  { id:'metro_farcito', base:'¼ Metro Farcito', price:14.00, category:'📏 Metro e mignon', voice:['metro farcito'] },
+  { id:'metro_margherita', base:'Mezzo Metro Margherita', price:12.00, category:'📏 Metro e mignon', voice:['metro margherita','mezzo metro margherita'] },
+  { id:'metro_farcito', base:'Mezzo Metro Farcito', price:14.00, category:'📏 Metro e mignon', voice:['metro farcito','mezzo metro farcito'], scegliGusti:2 },
   { id:'portafoglio', base:'Pizza a portafoglio', price:3.50, category:'📏 Metro e mignon', voice:['portafoglio'] },
   { id:'mignon_margherita', base:'Mignon Margherita', price:2.00, category:'📏 Metro e mignon', voice:['mignon margherita'] },
   { id:'mignon_farcita', base:'Mignon Farcita', price:2.50, category:'📏 Metro e mignon', voice:['mignon farcita'] },
@@ -673,15 +696,22 @@ const RE_INIZIO_MODIFICATORE = new RegExp('^(' + PAROLE_MODIFICATORE.join('|') +
 let orderCounter = 0;
 let nextLineId = 1;
 let currentOrder = []; // array di righe: {lineId, catId, qty, extra}
-let openOrders = [];   // {numero, orario(Date), voci:[{catId, qty, extra}], totale}
+let openOrders = [];   // {numero, orario(Date), voci:[{catId, qty, extra}], totale, nomeCliente}
 let activeTab = 'cucina';
 let editingOrderNumber = null; // null = nuovo ordine, altrimenti numero dell'ordine in modifica
 let editandoLineId = null; // lineId della riga di cui si sta scrivendo/dettando la variazione
+let farciscendoLineId = null; // lineId di un Mezzo Metro Farcito in attesa che si scelgano i gusti
+let farciscendoGusti = [];    // gusti scelti finora per quella riga (max 2)
+let nomeClienteCorrente = ''; // nome cliente per l'ordine in corso (opzionale)
 
 const fmtEuro = n => '€' + n.toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2});
 const fmtOra = d => d.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
 const fmtData = d => d.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'2-digit'});
 const prod = catId => CATALOGO.find(p => p.id === catId);
+// Una riga può avere più "gusti"/variazioni separate da a-capo (es. i due
+// gusti di un Mezzo Metro Farcito): questa funzione le separa in un elenco,
+// scartando righe vuote.
+const righeExtra = extra => (extra || '').split('\n').map(s => s.trim()).filter(Boolean);
 
 // ---------------------------------------------------------------------
 // MEMORIA LOCALE — tiene traccia degli ordini anche ricaricando la pagina.
@@ -698,7 +728,8 @@ function salvaStato(){
       nextLineId,
       openOrders: openOrders.map(o => ({ ...o, orario: o.orario.toISOString() })),
       currentOrder,
-      editingOrderNumber
+      editingOrderNumber,
+      nomeClienteCorrente
     };
     localStorage.setItem(CHIAVE_STATO, JSON.stringify(stato));
   } catch(e){ /* memoria locale non disponibile: l'app funziona comunque, solo senza salvataggio */ }
@@ -716,6 +747,7 @@ function caricaStato(){
     openOrders = (stato.openOrders || []).map(o => ({ ...o, orario: new Date(o.orario) }));
     currentOrder = stato.currentOrder || [];
     editingOrderNumber = (stato.editingOrderNumber === undefined) ? null : stato.editingOrderNumber;
+    nomeClienteCorrente = stato.nomeClienteCorrente || '';
 
     // Scarta eventuali righe che fanno riferimento a prodotti non più
     // presenti nel catalogo (es. dopo un aggiornamento del menù), così
@@ -740,6 +772,7 @@ const COLORI_CATEGORIA = {
   '🍕 Pizze rosse': '#E4572E',
   '🧀 Pizze bianche': '#D9B84A',
   '📏 Metro e mignon': '#4C8FD9',
+  '📏 Mezzo Metro': '#4C8FD9',
   '🥐 Ripieno al forno': '#C08A4E',
   '🥙 Saltimbocca': '#C1443A',
   '🥗 Saltimbocca vegetariano': '#7FAF6E',
@@ -765,7 +798,7 @@ function renderMenu(){
         ${CATALOGO.filter(p => p.category === cat).map(p => `
           <button class="item-btn" data-id="${p.id}" style="--cat-color:${COLORI_CATEGORIA[cat] || 'var(--gold)'};">
             <span class="name">${p.base}${p.note ? ' <em style="color:#a8977d;font-style:normal;">(' + p.note + ')</em>' : ''}</span>
-            <span class="price">${fmtEuro(p.price)}</span>
+            ${p.prezzoDaDefinire ? '' : `<span class="price">${fmtEuro(p.price)}</span>`}
           </button>
         `).join('')}
       </div>
@@ -773,10 +806,50 @@ function renderMenu(){
   `).join('');
   menu.querySelectorAll('.item-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      const p = prod(btn.dataset.id);
+
+      // Se siamo in attesa di gusti per un Mezzo Metro Farcito e questo
+      // pulsante è una pizza (rossa o bianca), lo registriamo come gusto
+      // invece di aggiungere una riga a sé.
+      if(farciscendoLineId !== null && (p.category === '🍕 Pizze rosse' || p.category === '🧀 Pizze bianche')){
+        farciscendoGusti.push(p.base);
+        const linea = currentOrder.find(l => l.lineId === farciscendoLineId);
+        if(linea) linea.extra = farciscendoGusti.join('\n');
+        if(farciscendoGusti.length >= 2) terminaScelteGusti();
+        renderCurrent();
+        return;
+      }
+
       aggiungiRiga(btn.dataset.id, 1, null);
       renderCurrent();
+
+      // Se il prodotto appena aggiunto richiede la scelta dei gusti (es.
+      // Mezzo Metro Farcito), entriamo in modalità "scegli i gusti".
+      if(p.scegliGusti){
+        const linea = [...currentOrder].reverse().find(l => l.catId === p.id);
+        if(linea) iniziaSceltaGusti(linea.lineId, p.scegliGusti, p.base);
+      }
     });
   });
+}
+
+function iniziaSceltaGusti(lineId, quantiGusti, nomeProdotto){
+  farciscendoLineId = lineId;
+  farciscendoGusti = [];
+  const banner = document.getElementById('editBanner');
+  banner.style.display = 'flex';
+  banner.innerHTML = `<span>Tocca fino a ${quantiGusti} pizze (dalla pagina Pizze) per scegliere i gusti di "${nomeProdotto}"</span><button id="fineSceltaGustiBtn">Fatto</button>`;
+  document.getElementById('fineSceltaGustiBtn').addEventListener('click', terminaScelteGusti);
+}
+
+function terminaScelteGusti(){
+  farciscendoLineId = null;
+  farciscendoGusti = [];
+  const banner = document.getElementById('editBanner');
+  if(editingOrderNumber === null){ // se non siamo anche in modifica di un altro ordine, nascondi il banner
+    banner.style.display = 'none';
+    banner.innerHTML = '';
+  }
 }
 
 // ---------------------------------------------------------------------
@@ -839,12 +912,13 @@ function htmlComandaCucina(ordine){
   return `
     <div class="receipt">
       <div class="r-head">SOUFFLÉ &nbsp; N.${String(ordine.numero).padStart(3,'0')} &nbsp; ${fmtData(ordine.orario)} ${fmtOra(ordine.orario)}</div>
+      ${ordine.nomeCliente ? `<div class="r-cliente">👤 ${ordine.nomeCliente}</div>` : ''}
       <hr>
       ${categorie.map(cat => `
         <div class="r-cat">${cat}</div>
         ${vociCucina.filter(v => prod(v.catId).category === cat).map(v => {
           const p = prod(v.catId);
-          return `<div class="r-row"><span>${v.qty} ${p.base}</span></div>${p.note ? `<div class="r-note">- ${p.note}</div>` : ''}${v.extra ? `<div class="r-note">- ${v.extra}</div>` : ''}`;
+          return `<div class="r-row"><span>${v.qty} ${p.base}</span></div>${p.note ? `<div class="r-note">- ${p.note}</div>` : ''}${righeExtra(v.extra).map(g => `<div class="r-note">- ${g}</div>`).join('')}`;
         }).join('')}
       `).join('')}
     </div>`;
@@ -859,6 +933,7 @@ function htmlScontrinoCliente(ordine){
   return `
     <div class="receipt">
       <div class="r-head">SOUFFLÉ &nbsp; N.${String(ordine.numero).padStart(3,'0')} &nbsp; ${fmtData(ordine.orario)} ${fmtOra(ordine.orario)}</div>
+      ${ordine.nomeCliente ? `<div class="r-cliente">👤 ${ordine.nomeCliente}</div>` : ''}
       <hr>
       ${categorie.map(cat => `
         <div class="r-cat">${cat}</div>
@@ -866,7 +941,7 @@ function htmlScontrinoCliente(ordine){
           const p = prod(v.catId);
           const label = p.base + (p.note ? ' ' + p.note : '');
           const prezzo = (v.prezzoManuale !== undefined && v.prezzoManuale !== null) ? v.prezzoManuale : p.price;
-          return `<div class="r-row"><span>${v.qty} ${label}</span><span>${fmtEuro(prezzo * v.qty)}</span></div>${v.extra ? `<div class="r-note">- ${v.extra}</div>` : ''}`;
+          return `<div class="r-row"><span>${v.qty} ${label}</span><span>${fmtEuro(prezzo * v.qty)}</span></div>${righeExtra(v.extra).map(g => `<div class="r-note">- ${g}</div>`).join('')}`;
         }).join('')}
       `).join('')}
       <hr>
@@ -884,6 +959,7 @@ function htmlComandaCucinaEditabile(righe, numero, orario){
   return `
     <div class="receipt">
       <div class="r-head">SOUFFLÉ &nbsp; N.${String(numero).padStart(3,'0')} &nbsp; ${fmtData(orario)} ${fmtOra(orario)}</div>
+      ${nomeClienteCorrente.trim() ? `<div class="r-cliente">👤 ${nomeClienteCorrente.trim()}</div>` : ''}
       <hr>
       ${categorie.map(cat => `
         <div class="r-cat">${cat}</div>
@@ -903,7 +979,7 @@ function htmlComandaCucinaEditabile(righe, numero, orario){
               </div>`;
           }
           return `<div class="r-row">
-            <span>${l.qty} ${prod(l.catId).base}${l.extra ? `<br><small style="color:var(--ink-soft);">${l.extra}</small>` : ''}</span>
+            <span>${l.qty} ${prod(l.catId).base}${righeExtra(l.extra).map(g => `<br><small style="color:var(--ink-soft);">${g}</small>`).join('')}</span>
             <div class="r-row-controls">
               <button class="r-price-tag" data-lineid="${l.lineId}" title="Tocca per correggere il prezzo">${fmtEuro(prezzoLinea(l))}</button>
               <button class="r-edit-note" data-lineid="${l.lineId}" title="Aggiungi/modifica variazione">✎</button>
@@ -1177,18 +1253,21 @@ function finalizzaOrdine(){
     if(ordine){
       ordine.voci = voci;
       ordine.totale = totale;
+      ordine.nomeCliente = nomeClienteCorrente.trim() || null;
       ordineFinale = ordine;
     }
     annuncio = `Ordine ${ordineFinale.numero} aggiornato. Nuovo totale ${Math.round(totale)} euro.`;
     uscitaModalitaModifica();
   } else {
     orderCounter += 1;
-    ordineFinale = { numero: orderCounter, orario: new Date(), voci, totale };
+    ordineFinale = { numero: orderCounter, orario: new Date(), voci, totale, nomeCliente: nomeClienteCorrente.trim() || null };
     openOrders.unshift(ordineFinale);
     annuncio = `Ordine ${ordineFinale.numero}. Totale ${Math.round(totale)} euro.`;
   }
 
   currentOrder = [];
+  nomeClienteCorrente = '';
+  document.getElementById('nomeClienteInput').value = '';
   renderCurrent();
   renderBoard();
   registraStorico(ordineFinale);
@@ -1254,6 +1333,7 @@ function padDestraEsc(sinistra, destra, larghezza){
 function escComandaCucina(ordine){
   let t = P_INIT + '\n\n\n\n\n' + P_CENTRO + P_BOLD_ON; // ~2cm di spazio prima dell'intestazione, per agganciare la comanda nel porta-comande
   t += `SOUFFLE  N.${String(ordine.numero).padStart(3,'0')}  ${fmtData(ordine.orario)} ${fmtOra(ordine.orario)}\n`;
+  if(ordine.nomeCliente) t += sanificaPerStampa(ordine.nomeCliente) + '\n';
   t += P_BOLD_OFF + P_SINISTRA + '-'.repeat(RIGA_ESC) + '\n';
   // Le bibite non vanno in cucina: escono solo sullo scontrino cliente.
   const vociCucina = ordine.voci.filter(v => prod(v.catId).category !== '🍺 Bevande');
@@ -1264,7 +1344,7 @@ function escComandaCucina(ordine){
       const p = prod(v.catId);
       t += `${v.qty} ${p.base}\n`;
       if(p.note) t += `  - ${p.note}\n`;
-      if(v.extra) t += `  - ${v.extra}\n`;
+      righeExtra(v.extra).forEach(g => t += `  - ${g}\n`);
     });
   });
   t += '\n\n\n' + P_TAGLIO; // spazio normale dopo, il taglio è già più in basso
@@ -1274,6 +1354,7 @@ function escComandaCucina(ordine){
 function escScontrinoCliente(ordine){
   let t = P_INIT + P_CENTRO + P_BOLD_ON;
   t += `SOUFFLE  N.${String(ordine.numero).padStart(3,'0')}  ${fmtData(ordine.orario)} ${fmtOra(ordine.orario)}\n`;
+  if(ordine.nomeCliente) t += sanificaPerStampa(ordine.nomeCliente) + '\n';
   t += P_BOLD_OFF + P_SINISTRA + '-'.repeat(RIGA_ESC) + '\n';
   let totale = 0;
   const categorie = [...new Set(ordine.voci.map(v => prod(v.catId).category))];
@@ -1285,7 +1366,7 @@ function escScontrinoCliente(ordine){
       totale += prezzo * v.qty;
       const label = p.base + (p.note ? ' ' + p.note : '');
       t += padDestraEsc(`${v.qty} ${label}`, fmtEuroEsc(prezzo * v.qty), RIGA_ESC) + '\n';
-      if(v.extra) t += `  ${v.extra}\n`;
+      righeExtra(v.extra).forEach(g => t += `  ${g}\n`);
     });
   });
   t += '-'.repeat(RIGA_ESC) + '\n';
@@ -1329,20 +1410,12 @@ async function trovaUsbInterfacciaEndpoint(){
   throw new Error('Nessun endpoint USB di uscita trovato sulla stampante');
 }
 
-// Teniamo la stampante "occupata" (claimed) tra una stampa e l'altra invece
-// di lasciarla e riprenderla ogni volta: così, dopo la primissima stampa
-// della giornata, QZ Tray chiede l'autorizzazione una sola volta invece di
-// tre. Viene rilasciata solo quando si chiude/ricarica la pagina.
+// Manda un singolo testo alla stampante (assume che sia già stata "presa in
+// carico" con claimDevice — vedi stampaOrdine più sotto, che si occupa di
+// prendere/rilasciare la stampante una volta sola anche quando si stampano
+// comanda e scontrino insieme, per ridurre le richieste di autorizzazione).
 async function stampaViaQZ(testoGrezzo){
-  await trovaUsbInterfacciaEndpoint();
-  await qz.usb.claimDevice(STAMPANTE_USB_VENDOR, STAMPANTE_USB_PRODUCT, _usbInterfaccia);
-  try{
-    await qz.usb.sendData(STAMPANTE_USB_VENDOR, STAMPANTE_USB_PRODUCT, _usbEndpoint, sanificaPerStampa(testoGrezzo));
-  } finally {
-    // Rilasciamo SEMPRE la stampante subito dopo, anche se qualcosa va storto:
-    // tenerla "occupata" tra una stampa e l'altra la faceva bloccare più spesso.
-    await qz.usb.releaseDevice(STAMPANTE_USB_VENDOR, STAMPANTE_USB_PRODUCT).catch(()=>{});
-  }
+  await qz.usb.sendData(STAMPANTE_USB_VENDOR, STAMPANTE_USB_PRODUCT, _usbEndpoint, sanificaPerStampa(testoGrezzo));
 }
 
 // Manda alla stampante solo il contenuto scelto (cucina, cliente o entrambe).
@@ -1360,8 +1433,17 @@ async function stampaOrdine(tipo, ordine){
 
   if(disponibile){
     try{
-      if(stampaCucina) await stampaViaQZ(escComandaCucina(ordine));
-      if(stampaCliente) await stampaViaQZ(escScontrinoCliente(ordine));
+      await trovaUsbInterfacciaEndpoint();
+      // Un solo "claim" per tutta l'operazione (comanda + scontrino insieme
+      // contano come UNA autorizzazione, non due): rilasciamo sempre alla
+      // fine, così la stampante non resta mai occupata tra un ordine e l'altro.
+      await qz.usb.claimDevice(STAMPANTE_USB_VENDOR, STAMPANTE_USB_PRODUCT, _usbInterfaccia);
+      try{
+        if(stampaCucina) await stampaViaQZ(escComandaCucina(ordine));
+        if(stampaCliente) await stampaViaQZ(escScontrinoCliente(ordine));
+      } finally {
+        await qz.usb.releaseDevice(STAMPANTE_USB_VENDOR, STAMPANTE_USB_PRODUCT).catch(()=>{});
+      }
       return;
     } catch(e){
       console.error('Errore durante la stampa via QZ Tray:', e);
@@ -1405,6 +1487,8 @@ function enterEditMode(numero){
 
   editingOrderNumber = numero;
   currentOrder = ordine.voci.map(v => ({ lineId: nextLineId++, catId: v.catId, qty: v.qty, extra: v.extra || null, prezzoManuale: (v.prezzoManuale !== undefined && v.prezzoManuale !== null) ? v.prezzoManuale : undefined }));
+  nomeClienteCorrente = ordine.nomeCliente || '';
+  document.getElementById('nomeClienteInput').value = nomeClienteCorrente;
 
   document.getElementById('orderPanelTitle').textContent = `Modifica ordine N.${String(numero).padStart(3,'0')}`;
 
@@ -1419,6 +1503,8 @@ function enterEditMode(numero){
 function uscitaModalitaModifica(){
   editingOrderNumber = null;
   currentOrder = [];
+  nomeClienteCorrente = '';
+  document.getElementById('nomeClienteInput').value = '';
   document.getElementById('orderPanelTitle').textContent = 'Ordine in corso';
   document.getElementById('editBanner').style.display = 'none';
   renderCurrent();
@@ -1440,6 +1526,7 @@ function renderBoard(){
     return `
       <div class="order-card ${late ? 'late' : ''}" data-numero="${o.numero}">
         <span class="num">N.${String(o.numero).padStart(3,'0')}</span>
+        ${o.nomeCliente ? `<span class="cliente">${o.nomeCliente}</span>` : ''}
         <span class="elapsed">${late ? '⚠️' : ''} ${Math.floor(minuti)}′ · ${fmtEuro(o.totale)}</span>
         <button class="edit-btn" data-numero="${o.numero}" title="Aggiungi prodotti">✎</button>
         <button class="close-btn" data-numero="${o.numero}" title="Ordine servito">✔</button>
@@ -1490,7 +1577,35 @@ function dettaBreve(onStart, onRisultato, onFine){
 }
 
 // ---------------------------------------------------------------------
+// NOME CLIENTE (facoltativo) — dettato o scritto, resta collegato
+// all'ordine in corso e viene stampato sia sulla comanda cucina che sullo
+// scontrino cliente.
+// ---------------------------------------------------------------------
+const nomeClienteInput = document.getElementById('nomeClienteInput');
+nomeClienteInput.addEventListener('input', () => {
+  nomeClienteCorrente = nomeClienteInput.value;
+  salvaStato();
+});
+document.getElementById('nomeClienteMic').addEventListener('click', (e) => {
+  const btn = e.currentTarget;
+  dettaBreve(
+    () => { btn.classList.add('listening'); btn.textContent = '●'; },
+    (testo) => {
+      btn.classList.remove('listening'); btn.textContent = '🎤';
+      if(testo){
+        // Prima lettera maiuscola, così "mario" diventa "Mario"
+        nomeClienteCorrente = testo.charAt(0).toUpperCase() + testo.slice(1);
+        nomeClienteInput.value = nomeClienteCorrente;
+        salvaStato();
+      }
+    },
+    () => { btn.classList.remove('listening'); btn.textContent = '🎤'; }
+  );
+});
+
+// ---------------------------------------------------------------------
 caricaStato();
+nomeClienteInput.value = nomeClienteCorrente;
 renderMenu();
 renderCurrent();
 renderBoard();
