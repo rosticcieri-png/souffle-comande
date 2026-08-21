@@ -84,7 +84,7 @@
     padding: 18px;
   }
   .panel.order-panel{
-    flex: 0 0 380px;
+    flex: 0 0 460px;
     max-width: 380px;
     padding: 0;
     position: sticky;
@@ -262,7 +262,7 @@
     background: var(--paper);
     color: var(--ink);
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 13px;
+    font-size: 16px;
     padding: 18px 16px 26px;
     position: relative;
     clip-path: polygon(
@@ -311,7 +311,7 @@
   .receipt .r-empty{ text-align:center; color: var(--ink-soft); padding: 20px 0; font-style: italic; }
 
   /* Comanda cucina a schermo: caratteri più grandi per leggerla meglio da lontano */
-  #receiptView.vista-cucina .receipt{ font-size: 18px; padding: 22px 20px 30px; }
+  #receiptView.vista-cucina .receipt{ font-size: 21px; padding: 22px 20px 30px; }
   #receiptView.vista-cucina .r-head{ font-size: 17px; }
   #receiptView.vista-cucina .r-cat{ font-size: 19px; margin: 14px 0 6px; }
   #receiptView.vista-cucina .r-row{ padding: 4px 0; }
@@ -394,6 +394,7 @@
     flex: 0 0 auto;
     display:flex; align-items:center; gap:12px;
     white-space: nowrap;
+    cursor: pointer;
   }
   .order-card.late{
     border-color: var(--ember);
@@ -435,6 +436,47 @@
     display:flex; align-items:center; gap: 10px;
     margin-bottom: 12px;
   }
+  .tavoli-home{
+    max-width: 900px; margin: 0 auto; padding: 32px 24px 12px; text-align:center;
+  }
+  .tavoli-titolo{
+    font-family:'Big Shoulders Display', sans-serif; font-size: 34px; color: var(--gold);
+    margin: 0 0 20px;
+  }
+  .tavoli-grid-grande{
+    display:grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 600px){ .tavoli-grid-grande{ grid-template-columns: repeat(2, 1fr); } }
+  .tavolo-btn-grande{
+    padding: 30px 10px;
+    border-radius: 14px;
+    border: none;
+    font-family:'Big Shoulders Display', sans-serif;
+    font-size: 40px; font-weight: 800;
+    cursor: pointer;
+    color: var(--paper);
+    background: var(--basil); /* libero = verde? no: rosso libero, verde occupato, vedi classi sotto */
+    transition: transform 0.08s ease;
+  }
+  .tavolo-btn-grande:active{ transform: scale(0.97); }
+  .tavolo-btn-grande.libero{ background: var(--ember); }
+  .tavolo-btn-grande.occupato{ background: var(--basil); }
+  .tavolo-btn-grande .etichetta{ display:block; font-family:'Inter', sans-serif; font-size: 13px; font-weight:600; margin-top: 4px; opacity: 0.85; }
+  .nuovo-ordine-btn{
+    background: transparent; border: 1px solid var(--gold); color: var(--gold);
+    padding: 12px 24px; border-radius: 10px; font-size: 16px; cursor:pointer;
+  }
+  .nuovo-ordine-btn:hover{ background: var(--gold); color: var(--ink); }
+  .board-titolo{
+    font-family:'Big Shoulders Display', sans-serif; font-size: 15px; color: var(--gold);
+    text-transform: uppercase; letter-spacing: 0.5px; margin: 0 14px 0 0; flex-shrink:0;
+  }
+  .torna-tavoli-btn{
+    background: transparent; border: 1px solid var(--line); color: var(--paper);
+    padding: 8px 14px; border-radius: 8px; font-size: 14px; cursor:pointer; margin-bottom: 12px;
+  }
+  .torna-tavoli-btn:hover{ border-color: var(--gold); color: var(--gold); }
   .cliente-row input{
     flex: 1;
     padding: 9px 12px;
@@ -510,10 +552,19 @@
 </head>
 <body>
 
-<div class="top-fisso">
-  <div class="board">
-    <div class="board-grid" id="board"></div>
-    <button id="btnResoconto" class="resoconto-btn" title="Vedi il resoconto vendite">📊</button>
+<div id="schermataTavoli">
+  <div class="tavoli-home">
+    <h1 class="tavoli-titolo">🍽️ Tavoli</h1>
+    <div class="tavoli-grid-grande" id="tavoliGrid"></div>
+    <button id="nuovoOrdineBtn" class="nuovo-ordine-btn">+ Nuovo ordine (senza tavolo)</button>
+  </div>
+
+  <div class="top-fisso">
+    <div class="board">
+      <h2 class="board-titolo">Altri ordini aperti</h2>
+      <div class="board-grid" id="board"></div>
+      <button id="btnResoconto" class="resoconto-btn" title="Vedi il resoconto vendite">📊</button>
+    </div>
   </div>
 </div>
 
@@ -531,9 +582,11 @@
   </div>
 </div>
 
+<div id="schermataOrdine" style="display:none;">
 <main>
   <div class="panel order-panel">
     <div class="order-scroll">
+      <button id="tornaTavoliBtn" class="torna-tavoli-btn">◀ Tavoli</button>
       <h2 id="orderPanelTitle">Ordine in corso</h2>
       <div class="edit-banner" id="editBanner" style="display:none;"></div>
 
@@ -573,6 +626,7 @@
     <div id="menu"></div>
   </div>
 </main>
+</div>
 
 <div id="printArea" class="print-only"></div>
 
@@ -901,6 +955,7 @@ function renderCurrent(){
   ['sendCucinaBtn','sendClienteBtn','sendEntrambeBtn','sendSospesoBtn'].forEach(id => {
     document.getElementById(id).disabled = righe.length === 0;
   });
+  renderTavoli();
   renderReceiptPreview();
   salvaStato();
 }
@@ -1523,6 +1578,73 @@ function uscitaModalitaModifica(){
 }
 
 // ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
+// SCHERMATE — "Tavoli" (home) e "Ordine" (menù + comanda in corso).
+// ---------------------------------------------------------------------
+function mostraSchermata(nome){
+  document.getElementById('schermataTavoli').style.display = (nome === 'tavoli') ? 'block' : 'none';
+  document.getElementById('schermataOrdine').style.display = (nome === 'ordine') ? 'block' : 'none';
+  if(nome === 'tavoli') renderTavoli();
+}
+
+document.getElementById('tornaTavoliBtn').addEventListener('click', () => {
+  // Se c'è qualcosa nell'ordine in corso, lo salviamo come conto sospeso
+  // prima di tornare alla schermata Tavoli, così non si perde nulla.
+  if(currentOrder.some(l => l.qty > 0)) finalizzaOrdine();
+  mostraSchermata('tavoli');
+});
+
+document.getElementById('nuovoOrdineBtn').addEventListener('click', () => {
+  if(editingOrderNumber !== null) uscitaModalitaModifica();
+  currentOrder = [];
+  nomeClienteCorrente = '';
+  document.getElementById('nomeClienteInput').value = '';
+  document.getElementById('orderPanelTitle').textContent = 'Ordine in corso';
+  document.getElementById('editBanner').style.display = 'none';
+  renderCurrent();
+  mostraSchermata('ordine');
+});
+
+// ---------------------------------------------------------------------
+// TAVOLI NUMERATI — toccando un tavolo si riprende il conto già aperto
+// (se c'è) o se ne inizia uno nuovo, e si passa alla schermata Ordine.
+// Verde = tavolo occupato (conto aperto), Rosso = tavolo libero.
+// ---------------------------------------------------------------------
+const NUMERO_TAVOLI = 6;
+
+function selezionaTavolo(n){
+  const nome = `Tavolo ${n}`;
+  const ordineEsistente = openOrders.find(o => o.nomeCliente === nome);
+
+  if(ordineEsistente){
+    enterEditMode(ordineEsistente.numero);
+  } else {
+    if(editingOrderNumber !== null) uscitaModalitaModifica();
+    currentOrder = [];
+    nomeClienteCorrente = nome;
+    document.getElementById('nomeClienteInput').value = nome;
+    document.getElementById('orderPanelTitle').textContent = 'Ordine in corso';
+    document.getElementById('editBanner').style.display = 'none';
+  }
+  renderCurrent();
+  mostraSchermata('ordine');
+}
+
+function renderTavoli(){
+  const grid = document.getElementById('tavoliGrid');
+  grid.innerHTML = '';
+  for(let n = 1; n <= NUMERO_TAVOLI; n++){
+    const nome = `Tavolo ${n}`;
+    const occupato = openOrders.some(o => o.nomeCliente === nome);
+    const btn = document.createElement('button');
+    btn.className = `tavolo-btn-grande ${occupato ? 'occupato' : 'libero'}`;
+    btn.innerHTML = `${n}<span class="etichetta">${occupato ? 'occupato' : 'libero'}</span>`;
+    btn.addEventListener('click', () => selezionaTavolo(n));
+    grid.appendChild(btn);
+  }
+}
+
+// ---------------------------------------------------------------------
 // BOARD ORDINI APERTI + evidenziazione oltre 15 minuti
 // ---------------------------------------------------------------------
 function renderBoard(){
@@ -1545,14 +1667,19 @@ function renderBoard(){
       </div>`;
   }).join('');
   board.querySelectorAll('.edit-btn').forEach(btn => {
-    btn.addEventListener('click', () => enterEditMode(parseInt(btn.dataset.numero)));
+    btn.addEventListener('click', (e) => { e.stopPropagation(); enterEditMode(parseInt(btn.dataset.numero)); mostraSchermata('ordine'); });
+  });
+  board.querySelectorAll('.order-card').forEach(card => {
+    card.addEventListener('click', () => { enterEditMode(parseInt(card.dataset.numero)); mostraSchermata('ordine'); });
   });
   board.querySelectorAll('.close-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       const n = parseInt(btn.dataset.numero);
       openOrders = openOrders.filter(o => o.numero !== n);
       if(editingOrderNumber === n) uscitaModalitaModifica();
       renderBoard();
+      renderTavoli();
     });
   });
   salvaStato();
@@ -1621,6 +1748,7 @@ nomeClienteInput.value = nomeClienteCorrente;
 renderMenu();
 renderCurrent();
 renderBoard();
+mostraSchermata('tavoli');
 
 // Controlla se QZ Tray è raggiungibile e aggiorna il piccolo indicatore
 (async () => {
