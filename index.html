@@ -275,6 +275,7 @@
   }
   .receipt .r-head{ text-align:center; font-weight:600; margin-bottom:2px; }
   .receipt .r-cliente{ text-align:center; font-size: 13px; color: var(--ink-soft); margin-bottom: 4px; }
+  .receipt .r-ritiro{ text-align:center; font-size: 15px; font-weight:800; color: var(--ember-dark); margin-bottom: 6px; }
   .receipt .r-meta{ text-align:center; font-size:11px; color: var(--ink-soft); margin-bottom:10px; }
   .receipt hr{ border:none; border-top: 1px dashed var(--ink-soft); margin: 8px 0; }
   .receipt .r-cat{ font-weight:700; margin: 10px 0 4px; }
@@ -408,6 +409,7 @@
   .order-card .top{ display:flex; align-items:center; gap:12px; }
   .order-card .num{ font-family:'Big Shoulders Display', sans-serif; font-weight:800; font-size:30px; color: var(--gold); }
   .order-card .cliente{ font-size: 16px; color: var(--paper); font-weight:600; }
+  .order-card .ritiro-badge{ font-size: 14px; color: var(--ember); font-weight:700; }
   .order-card.late .num{ color: var(--ember); }
   .order-card .time{ display:none; } /* nascosto per risparmiare spazio nella striscia sottile */
   .order-card .elapsed{ font-size: 20px; color:#c9bda3; white-space:nowrap; }
@@ -488,6 +490,22 @@
     font-family: 'Inter', sans-serif;
   }
   .cliente-row input::placeholder{ color: #8a7c65; }
+  .ritiro-label{ font-size: 15px; color: var(--paper); white-space: nowrap; }
+  .cliente-row input[type="time"]{
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--wood-lighter);
+    color: var(--paper);
+    font-size: 15px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .ritiro-clear-btn{
+    width: 34px; height: 34px; flex-shrink:0;
+    border-radius: 8px; border: 1px solid var(--line);
+    background: transparent; color: #a8756a; cursor:pointer; font-size: 14px;
+  }
+  .ritiro-clear-btn:hover{ background: var(--ember); border-color: var(--ember); color: var(--paper); }
 
   /* MICROFONO BREVE (dentro l'editor della variazione) */
   .mic-btn{
@@ -593,6 +611,12 @@
       <div class="cliente-row">
         <input type="text" id="nomeClienteInput" placeholder="Nome cliente (facoltativo)" autocomplete="off">
         <button id="nomeClienteMic" class="mic-btn" title="Detta il nome del cliente">🎤</button>
+      </div>
+
+      <div class="cliente-row">
+        <label for="orarioRitiroInput" class="ritiro-label">⏰ Ritiro alle</label>
+        <input type="time" id="orarioRitiroInput">
+        <button id="orarioRitiroClear" class="ritiro-clear-btn" title="Togli l'orario">✕</button>
       </div>
 
       <div class="hint-tasti">Tocca un prodotto dal menù per aggiungerlo. Su ogni riga qui sotto puoi poi toccare ✎ per dire o scrivere una variazione (es. "senza origano", "con pepe").</div>
@@ -762,6 +786,7 @@ let editandoLineId = null; // lineId della riga di cui si sta scrivendo/dettando
 let farciscendoLineId = null; // lineId di un Mezzo Metro Farcito in attesa che si scelgano i gusti
 let farciscendoGusti = [];    // gusti scelti finora per quella riga (max 2)
 let nomeClienteCorrente = ''; // nome cliente per l'ordine in corso (opzionale)
+let orarioRitiroCorrente = ''; // orario di ritiro (facoltativo, formato "HH:MM"), per ordini telefonici
 
 const fmtEuro = n => '€' + n.toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2});
 const fmtOra = d => d.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
@@ -788,7 +813,8 @@ function salvaStato(){
       openOrders: openOrders.map(o => ({ ...o, orario: o.orario.toISOString() })),
       currentOrder,
       editingOrderNumber,
-      nomeClienteCorrente
+      nomeClienteCorrente,
+      orarioRitiroCorrente
     };
     localStorage.setItem(CHIAVE_STATO, JSON.stringify(stato));
   } catch(e){ /* memoria locale non disponibile: l'app funziona comunque, solo senza salvataggio */ }
@@ -807,6 +833,7 @@ function caricaStato(){
     currentOrder = stato.currentOrder || [];
     editingOrderNumber = (stato.editingOrderNumber === undefined) ? null : stato.editingOrderNumber;
     nomeClienteCorrente = stato.nomeClienteCorrente || '';
+    orarioRitiroCorrente = stato.orarioRitiroCorrente || '';
 
     // Scarta eventuali righe che fanno riferimento a prodotti non più
     // presenti nel catalogo (es. dopo un aggiornamento del menù), così
@@ -973,6 +1000,7 @@ function htmlComandaCucina(ordine){
     <div class="receipt">
       <div class="r-head">SOUFFLÉ &nbsp; N.${String(ordine.numero).padStart(3,'0')} &nbsp; ${fmtData(ordine.orario)} ${fmtOra(ordine.orario)}</div>
       ${ordine.nomeCliente ? `<div class="r-cliente">👤 ${ordine.nomeCliente}</div>` : ''}
+      ${ordine.orarioRitiro ? `<div class="r-ritiro">⏰ RITIRO ORE ${ordine.orarioRitiro}</div>` : ''}
       <hr>
       ${categorie.map(cat => `
         <div class="r-cat">${cat}</div>
@@ -994,6 +1022,7 @@ function htmlScontrinoCliente(ordine){
     <div class="receipt">
       <div class="r-head">SOUFFLÉ &nbsp; N.${String(ordine.numero).padStart(3,'0')} &nbsp; ${fmtData(ordine.orario)} ${fmtOra(ordine.orario)}</div>
       ${ordine.nomeCliente ? `<div class="r-cliente">👤 ${ordine.nomeCliente}</div>` : ''}
+      ${ordine.orarioRitiro ? `<div class="r-ritiro">⏰ RITIRO ORE ${ordine.orarioRitiro}</div>` : ''}
       <hr>
       ${categorie.map(cat => `
         <div class="r-cat">${cat}</div>
@@ -1020,6 +1049,7 @@ function htmlComandaCucinaEditabile(righe, numero, orario){
     <div class="receipt">
       <div class="r-head">SOUFFLÉ &nbsp; N.${String(numero).padStart(3,'0')} &nbsp; ${fmtData(orario)} ${fmtOra(orario)}</div>
       ${nomeClienteCorrente.trim() ? `<div class="r-cliente">👤 ${nomeClienteCorrente.trim()}</div>` : ''}
+      ${orarioRitiroCorrente ? `<div class="r-ritiro">⏰ RITIRO ORE ${orarioRitiroCorrente}</div>` : ''}
       <hr>
       ${categorie.map(cat => `
         <div class="r-cat">${cat}</div>
@@ -1314,20 +1344,23 @@ function finalizzaOrdine(){
       ordine.voci = voci;
       ordine.totale = totale;
       ordine.nomeCliente = nomeClienteCorrente.trim() || null;
+      ordine.orarioRitiro = orarioRitiroCorrente || null;
       ordineFinale = ordine;
     }
     annuncio = `Ordine ${ordineFinale.numero} aggiornato. Nuovo totale ${Math.round(totale)} euro.`;
     uscitaModalitaModifica();
   } else {
     orderCounter += 1;
-    ordineFinale = { numero: orderCounter, orario: new Date(), voci, totale, nomeCliente: nomeClienteCorrente.trim() || null };
+    ordineFinale = { numero: orderCounter, orario: new Date(), voci, totale, nomeCliente: nomeClienteCorrente.trim() || null, orarioRitiro: orarioRitiroCorrente || null };
     openOrders.unshift(ordineFinale);
     annuncio = `Ordine ${ordineFinale.numero}. Totale ${Math.round(totale)} euro.`;
   }
 
   currentOrder = [];
   nomeClienteCorrente = '';
+  orarioRitiroCorrente = '';
   document.getElementById('nomeClienteInput').value = '';
+  document.getElementById('orarioRitiroInput').value = '';
   renderCurrent();
   renderBoard();
   registraStorico(ordineFinale);
@@ -1394,6 +1427,7 @@ function escComandaCucina(ordine){
   let t = P_INIT + '\n\n\n\n\n' + P_CENTRO + P_BOLD_ON; // ~2cm di spazio prima dell'intestazione, per agganciare la comanda nel porta-comande
   t += `SOUFFLE  N.${String(ordine.numero).padStart(3,'0')}  ${fmtData(ordine.orario)} ${fmtOra(ordine.orario)}\n`;
   if(ordine.nomeCliente) t += sanificaPerStampa(ordine.nomeCliente) + '\n';
+  if(ordine.orarioRitiro) t += P_BOLD_ON + '*** RITIRO ORE ' + ordine.orarioRitiro + ' ***' + P_BOLD_OFF + '\n';
   t += P_BOLD_OFF + P_SINISTRA + '-'.repeat(RIGA_ESC) + '\n';
   // Le bibite non vanno in cucina: escono solo sullo scontrino cliente.
   const vociCucina = ordine.voci.filter(v => prod(v.catId).category !== '🍺 Bevande');
@@ -1415,6 +1449,7 @@ function escScontrinoCliente(ordine){
   let t = P_INIT + P_CENTRO + P_BOLD_ON;
   t += `SOUFFLE  N.${String(ordine.numero).padStart(3,'0')}  ${fmtData(ordine.orario)} ${fmtOra(ordine.orario)}\n`;
   if(ordine.nomeCliente) t += sanificaPerStampa(ordine.nomeCliente) + '\n';
+  if(ordine.orarioRitiro) t += P_BOLD_ON + '*** RITIRO ORE ' + ordine.orarioRitiro + ' ***' + P_BOLD_OFF + '\n';
   t += P_BOLD_OFF + P_SINISTRA + '-'.repeat(RIGA_ESC) + '\n';
   let totale = 0;
   const categorie = [...new Set(ordine.voci.map(v => prod(v.catId).category))];
@@ -1556,6 +1591,8 @@ function enterEditMode(numero){
   currentOrder = ordine.voci.map(v => ({ lineId: nextLineId++, catId: v.catId, qty: v.qty, extra: v.extra || null, prezzoManuale: (v.prezzoManuale !== undefined && v.prezzoManuale !== null) ? v.prezzoManuale : undefined }));
   nomeClienteCorrente = ordine.nomeCliente || '';
   document.getElementById('nomeClienteInput').value = nomeClienteCorrente;
+  orarioRitiroCorrente = ordine.orarioRitiro || '';
+  document.getElementById('orarioRitiroInput').value = orarioRitiroCorrente;
 
   document.getElementById('orderPanelTitle').textContent = `Modifica ordine N.${String(numero).padStart(3,'0')}`;
 
@@ -1571,7 +1608,9 @@ function uscitaModalitaModifica(){
   editingOrderNumber = null;
   currentOrder = [];
   nomeClienteCorrente = '';
+  orarioRitiroCorrente = '';
   document.getElementById('nomeClienteInput').value = '';
+  document.getElementById('orarioRitiroInput').value = '';
   document.getElementById('orderPanelTitle').textContent = 'Ordine in corso';
   document.getElementById('editBanner').style.display = 'none';
   renderCurrent();
@@ -1598,7 +1637,9 @@ document.getElementById('nuovoOrdineBtn').addEventListener('click', () => {
   if(editingOrderNumber !== null) uscitaModalitaModifica();
   currentOrder = [];
   nomeClienteCorrente = '';
+  orarioRitiroCorrente = '';
   document.getElementById('nomeClienteInput').value = '';
+  document.getElementById('orarioRitiroInput').value = '';
   document.getElementById('orderPanelTitle').textContent = 'Ordine in corso';
   document.getElementById('editBanner').style.display = 'none';
   renderCurrent();
@@ -1622,7 +1663,9 @@ function selezionaTavolo(n){
     if(editingOrderNumber !== null) uscitaModalitaModifica();
     currentOrder = [];
     nomeClienteCorrente = nome;
+    orarioRitiroCorrente = '';
     document.getElementById('nomeClienteInput').value = nome;
+    document.getElementById('orarioRitiroInput').value = '';
     document.getElementById('orderPanelTitle').textContent = 'Ordine in corso';
     document.getElementById('editBanner').style.display = 'none';
   }
@@ -1661,6 +1704,7 @@ function renderBoard(){
       <div class="order-card ${late ? 'late' : ''}" data-numero="${o.numero}">
         <span class="num">N.${String(o.numero).padStart(3,'0')}</span>
         ${o.nomeCliente ? `<span class="cliente">${o.nomeCliente}</span>` : ''}
+        ${o.orarioRitiro ? `<span class="ritiro-badge">⏰ ${o.orarioRitiro}</span>` : ''}
         <span class="elapsed">${late ? '⚠️' : ''} ${Math.floor(minuti)}′ · ${fmtEuro(o.totale)}</span>
         <button class="edit-btn" data-numero="${o.numero}" title="Aggiungi prodotti">✎</button>
         <button class="close-btn" data-numero="${o.numero}" title="Ordine servito">✔</button>
@@ -1742,9 +1786,21 @@ document.getElementById('nomeClienteMic').addEventListener('click', (e) => {
   );
 });
 
+const orarioRitiroInput = document.getElementById('orarioRitiroInput');
+orarioRitiroInput.addEventListener('input', () => {
+  orarioRitiroCorrente = orarioRitiroInput.value;
+  salvaStato();
+});
+document.getElementById('orarioRitiroClear').addEventListener('click', () => {
+  orarioRitiroCorrente = '';
+  orarioRitiroInput.value = '';
+  salvaStato();
+});
+
 // ---------------------------------------------------------------------
 caricaStato();
 nomeClienteInput.value = nomeClienteCorrente;
+orarioRitiroInput.value = orarioRitiroCorrente;
 renderMenu();
 renderCurrent();
 renderBoard();
