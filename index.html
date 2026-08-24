@@ -329,7 +329,11 @@
     align-items: center;
     gap: 14px;
   }
-  .board h2{ display: none; } /* etichetta "Ordini aperti" rimossa: la striscia si riconosce da sola */
+  .board h2{ display: none; } /* etichetta generica nascosta di default... */
+  .board h2.board-titolo{ display: block; } /* ...tranne i titoli espliciti che abbiamo aggiunto (Ordini aperti / Ritiri programmati) */
+  .board-ritiri{ border-color: var(--ember); }
+  .board-ritiri .board-titolo{ color: var(--ember); }
+  .ritiro-countdown{ font-size: 13px; color:#c9bda3; }
   .board-grid{
     flex: 1;
     display:flex; flex-direction: row; flex-wrap: nowrap;
@@ -402,9 +406,18 @@
     box-shadow: 0 0 0 1px var(--ember) inset;
     animation: pulse 1.6s ease-in-out infinite;
   }
+  .order-card.ritiro-attivato:not(.late){
+    border-color: var(--gold);
+    box-shadow: 0 0 0 1px var(--gold) inset;
+    animation: pulseGold 1.6s ease-in-out infinite;
+  }
   @keyframes pulse{
     0%, 100%{ background: var(--wood-light); }
     50%{ background: #4a2c22; }
+  }
+  @keyframes pulseGold{
+    0%, 100%{ background: var(--wood-light); }
+    50%{ background: #5a4a1f; }
   }
   .order-card .top{ display:flex; align-items:center; gap:12px; }
   .order-card .num{ font-family:'Big Shoulders Display', sans-serif; font-weight:800; font-size:30px; color: var(--gold); }
@@ -582,6 +595,10 @@
       <h2 class="board-titolo">Altri ordini aperti</h2>
       <div class="board-grid" id="board"></div>
       <button id="btnResoconto" class="resoconto-btn" title="Vedi il resoconto vendite">📊</button>
+    </div>
+    <div class="board board-ritiri" id="boardRitiriWrap" style="display:none;">
+      <h2 class="board-titolo">⏰ Ritiri programmati</h2>
+      <div class="board-grid" id="boardRitiri"></div>
     </div>
   </div>
 </div>
@@ -1689,19 +1706,63 @@ function renderTavoli(){
 
 // ---------------------------------------------------------------------
 // BOARD ORDINI APERTI + evidenziazione oltre 15 minuti
+//
+// Gli ordini con un orario di ritiro programmato (es. ordini telefonici da
+// preparare più tardi) NON stanno in mezzo agli ordini in corso: restano
+// nella sezione "Ritiri programmati" finché manca più di mezz'ora, poi
+// passano da soli nella fila normale, evidenziati in dorato per un po'.
 // ---------------------------------------------------------------------
+const SOGLIA_ATTIVAZIONE_RITIRO_MINUTI = 15;
+
+function minutiAlRitiro(o){
+  if(!o.orarioRitiro) return null;
+  const [h, m] = o.orarioRitiro.split(':').map(Number);
+  const target = new Date();
+  target.setHours(h, m, 0, 0);
+  return (target.getTime() - Date.now()) / 60000;
+}
+
 function renderBoard(){
   const board = document.getElementById('board');
-  if(openOrders.length === 0){
+  const boardRitiriWrap = document.getElementById('boardRitiriWrap');
+  const boardRitiri = document.getElementById('boardRitiri');
+
+  const programmati = openOrders.filter(o => {
+    const m = minutiAlRitiro(o);
+    return m !== null && m > SOGLIA_ATTIVAZIONE_RITIRO_MINUTI;
+  });
+  const attivi = openOrders.filter(o => !programmati.includes(o));
+
+  if(programmati.length === 0){
+    boardRitiriWrap.style.display = 'none';
+  } else {
+    boardRitiriWrap.style.display = 'flex';
+    boardRitiri.innerHTML = programmati.map(o => {
+      const m = Math.round(minutiAlRitiro(o));
+      return `
+        <div class="order-card" data-numero="${o.numero}">
+          <span class="num">N.${String(o.numero).padStart(3,'0')}</span>
+          ${o.nomeCliente ? `<span class="cliente">${o.nomeCliente}</span>` : ''}
+          <span class="ritiro-badge">⏰ ${o.orarioRitiro}</span>
+          <span class="ritiro-countdown">tra ${m < 60 ? m + ' min' : Math.floor(m/60) + 'h ' + (m%60) + 'min'}</span>
+          <button class="edit-btn" data-numero="${o.numero}" title="Aggiungi prodotti">✎</button>
+          <button class="close-btn" data-numero="${o.numero}" title="Ordine servito">✔</button>
+        </div>`;
+    }).join('');
+    collegaEventiCard(boardRitiri);
+  }
+
+  if(attivi.length === 0){
     board.innerHTML = '<div class="board-empty">Nessun ordine aperto al momento.</div>';
     salvaStato();
     return;
   }
-  board.innerHTML = openOrders.map(o => {
+  board.innerHTML = attivi.map(o => {
     const minuti = (Date.now() - o.orario.getTime()) / 60000;
     const late = minuti > 15;
+    const ritiroAttivato = !!o.orarioRitiro; // è qui perché il suo orario è ormai vicino/passato
     return `
-      <div class="order-card ${late ? 'late' : ''}" data-numero="${o.numero}">
+      <div class="order-card ${late ? 'late' : ''} ${ritiroAttivato ? 'ritiro-attivato' : ''}" data-numero="${o.numero}">
         <span class="num">N.${String(o.numero).padStart(3,'0')}</span>
         ${o.nomeCliente ? `<span class="cliente">${o.nomeCliente}</span>` : ''}
         ${o.orarioRitiro ? `<span class="ritiro-badge">⏰ ${o.orarioRitiro}</span>` : ''}
@@ -1710,13 +1771,18 @@ function renderBoard(){
         <button class="close-btn" data-numero="${o.numero}" title="Ordine servito">✔</button>
       </div>`;
   }).join('');
-  board.querySelectorAll('.edit-btn').forEach(btn => {
+  collegaEventiCard(board);
+  salvaStato();
+}
+
+function collegaEventiCard(contenitore){
+  contenitore.querySelectorAll('.edit-btn').forEach(btn => {
     btn.addEventListener('click', (e) => { e.stopPropagation(); enterEditMode(parseInt(btn.dataset.numero)); mostraSchermata('ordine'); });
   });
-  board.querySelectorAll('.order-card').forEach(card => {
+  contenitore.querySelectorAll('.order-card').forEach(card => {
     card.addEventListener('click', () => { enterEditMode(parseInt(card.dataset.numero)); mostraSchermata('ordine'); });
   });
-  board.querySelectorAll('.close-btn').forEach(btn => {
+  contenitore.querySelectorAll('.close-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const n = parseInt(btn.dataset.numero);
@@ -1726,7 +1792,6 @@ function renderBoard(){
       renderTavoli();
     });
   });
-  salvaStato();
 }
 
 setInterval(renderBoard, 15000); // aggiorna i tempi trascorsi ogni 15 secondi
