@@ -167,6 +167,14 @@
   .item-btn .name{ display:block; font-weight:700; font-size: 24px; line-height: 1.25; }
   .item-btn .price{ display:block; font-size: 21px; color: var(--cat-color, var(--gold)); margin-top: 6px; font-weight:600; font-family:'IBM Plex Mono', monospace; }
 
+  .item-btn-menu{
+    background: #2f4a3a;
+    border: 1px solid #4caf7d;
+    border-left: 5px solid #4caf7d;
+  }
+  .item-btn-menu:hover{ background: #3a5c48; }
+  .item-btn-menu .price{ color: #7fe0ab; }
+
   /* ORDER IN PROGRESS */
   .current-list{ min-height: 40px; margin-bottom: 14px; }
   .current-row{
@@ -689,7 +697,7 @@ const CATALOGO = [
   { id:'romana', base:'Romana', price:6.00, category:'🍕 Pizze rosse', voice:['roman'] },
   { id:'siciliana', base:'Siciliana', price:6.50, category:'🍕 Pizze rosse', voice:['sicilian'] },
   { id:'sottobosco', base:'Sottobosco', price:6.50, category:'🍕 Pizze rosse', voice:['sottobosc'] },
-  { id:'menu_pizza', base:'Menu Pizza', price:10.00, category:'🍕 Pizze rosse', voice:['menu pizza'] },
+  { id:'menu_pizza', base:'Menu Pizza', price:10.00, category:'🍕 Pizze rosse', voice:['menu pizza'], isMenu:true },
 
   // 🧀 PIZZE BIANCHE
   { id:'quattro_formaggi', base:'4 Formaggi', price:8.00, category:'🧀 Pizze bianche', voice:['quattro formaggi','4 formaggi'] },
@@ -733,6 +741,7 @@ const CATALOGO = [
   { id:'saltimbocca_parmigiana_intero', base:'Parmigiana', note:'intero', price:14.00, category:'🥙 Saltimbocca', voice:['parmigiana intero'] },
   { id:'saltimbocca_capriccioso_meta', base:'Capriccioso', note:'metà', price:7.00, category:'🥙 Saltimbocca', voice:['capriccios'] },
   { id:'saltimbocca_capriccioso_intero', base:'Capriccioso', note:'intero', price:14.00, category:'🥙 Saltimbocca', voice:['capriccioso intero'] },
+  { id:'menu_saltimbocca', base:'Menu Saltimbocca', price:10.00, category:'🥙 Saltimbocca', voice:['menu saltimbocca'], isMenu:true },
 
   // 🥗 SALTIMBOCCA VEGETARIANO
   { id:'saltimbocca_veg_caprese_meta', base:'Caprese veg.', note:'metà', price:5.00, category:'🥗 Saltimbocca vegetariano', voice:['caprese vegetarian'] },
@@ -902,7 +911,7 @@ function renderMenu(){
       <div class="cat-title" style="color:${COLORI_CATEGORIA[cat] || '#a8977d'};">${cat}</div>
       <div class="btn-grid">
         ${CATALOGO.filter(p => p.category === cat).map(p => `
-          <button class="item-btn" data-id="${p.id}" style="--cat-color:${COLORI_CATEGORIA[cat] || 'var(--gold)'};">
+          <button class="item-btn ${p.isMenu ? 'item-btn-menu' : ''}" data-id="${p.id}" style="--cat-color:${COLORI_CATEGORIA[cat] || 'var(--gold)'};">
             <span class="name">${p.base}${p.note ? ' <em style="color:#a8977d;font-style:normal;">(' + p.note + ')</em>' : ''}</span>
             ${p.prezzoDaDefinire ? '' : `<span class="price">${fmtEuro(p.price)}</span>`}
           </button>
