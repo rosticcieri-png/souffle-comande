@@ -398,6 +398,14 @@
     display:flex; justify-content:space-between; margin-top: 14px; padding-top: 14px;
     border-top: 2px solid var(--gold); font-size: 19px; font-weight: 700; color: var(--gold);
   }
+  .sposta-lista{ display:flex; flex-direction:column; gap:10px; }
+  .sposta-opzione{
+    background: var(--wood-lighter); border: 1px solid var(--line); color: var(--paper);
+    padding: 14px 18px; border-radius: 10px; font-size: 18px; text-align:left; cursor:pointer;
+  }
+  .sposta-opzione:hover{ background: #5a4732; border-color: var(--gold); }
+  .sposta-opzione.occupata{ opacity: 0.45; cursor: not-allowed; }
+  .sposta-opzione .sposta-nota{ font-size: 14px; color:#a8756a; }
   .resoconto-vuoto{ color:#8a7c65; font-style: italic; padding: 20px 0; }
   .order-card{
     background: var(--wood-light);
@@ -622,6 +630,16 @@
       <button class="resoconto-tab" data-periodo="mese">Questo mese</button>
     </div>
     <div id="resocontoContenuto" class="resoconto-contenuto"></div>
+  </div>
+</div>
+
+<div id="spostaOverlay" class="resoconto-overlay" style="display:none;">
+  <div class="resoconto-box" style="width:min(480px, 92vw);">
+    <div class="resoconto-head">
+      <h2>🔀 Sposta il conto</h2>
+      <button id="chiudiSposta" class="resoconto-close">✕</button>
+    </div>
+    <div id="spostaContenuto" class="resoconto-contenuto"></div>
   </div>
 </div>
 
@@ -1627,7 +1645,8 @@ function enterEditMode(numero){
 
   const banner = document.getElementById('editBanner');
   banner.style.display = 'flex';
-  banner.innerHTML = `<span>Stai aggiungendo prodotti all'ordine N.${String(numero).padStart(3,'0')}</span><button id="annullaModificaBtn">Annulla</button>`;
+  banner.innerHTML = `<span>Stai aggiungendo prodotti all'ordine N.${String(numero).padStart(3,'0')}</span><button id="spostaOrdineBtn">🔀 Sposta</button><button id="annullaModificaBtn">Annulla</button>`;
+  document.getElementById('spostaOrdineBtn').addEventListener('click', () => apriSpostaOverlay(numero));
   document.getElementById('annullaModificaBtn').addEventListener('click', uscitaModalitaModifica);
 
   renderCurrent();
@@ -1644,6 +1663,56 @@ function uscitaModalitaModifica(){
   document.getElementById('editBanner').style.display = 'none';
   renderCurrent();
 }
+
+// ---------------------------------------------------------------------
+// SPOSTA UN CONTO da un tavolo all'altro, o da/verso l'asporto
+// ---------------------------------------------------------------------
+function apriSpostaOverlay(numero){
+  const ordine = openOrders.find(o => o.numero === numero);
+  if(!ordine) return;
+
+  let opzioni = '';
+  for(let n = 1; n <= NUMERO_TAVOLI; n++){
+    const nomeTavolo = `Tavolo ${n}`;
+    if(ordine.nomeCliente === nomeTavolo) continue; // è già lì
+    const occupato = openOrders.some(o => o.nomeCliente === nomeTavolo && o.numero !== numero);
+    opzioni += `<button class="sposta-opzione ${occupato ? 'occupata' : ''}" data-dest="${nomeTavolo}" ${occupato ? 'disabled' : ''}>
+      ${nomeTavolo}${occupato ? ' <span class=\"sposta-nota\">(occupato)</span>' : ''}
+    </button>`;
+  }
+  opzioni += `<button class="sposta-opzione" data-dest="__asporto__">📦 Asporto (nessun tavolo)</button>`;
+
+  document.getElementById('spostaContenuto').innerHTML = `
+    <p style="margin:0 0 14px;color:#c9bda3;">Ordine N.${String(numero).padStart(3,'0')} — dove lo sposto?</p>
+    <div class="sposta-lista">${opzioni}</div>
+  `;
+  document.getElementById('spostaOverlay').dataset.numero = numero;
+  document.getElementById('spostaOverlay').style.display = 'flex';
+
+  document.querySelectorAll('.sposta-opzione:not([disabled])').forEach(btn => {
+    btn.addEventListener('click', () => eseguiSposta(numero, btn.dataset.dest));
+  });
+}
+
+function eseguiSposta(numero, dest){
+  const ordine = openOrders.find(o => o.numero === numero);
+  if(!ordine) return;
+  ordine.nomeCliente = (dest === '__asporto__') ? null : dest;
+  if(editingOrderNumber === numero){
+    nomeClienteCorrente = ordine.nomeCliente || '';
+    document.getElementById('nomeClienteInput').value = nomeClienteCorrente;
+  }
+  document.getElementById('spostaOverlay').style.display = 'none';
+  renderBoard();
+  renderTavoli();
+}
+
+document.getElementById('chiudiSposta').addEventListener('click', () => {
+  document.getElementById('spostaOverlay').style.display = 'none';
+});
+document.getElementById('spostaOverlay').addEventListener('click', (e) => {
+  if(e.target.id === 'spostaOverlay') document.getElementById('spostaOverlay').style.display = 'none';
+});
 
 // ---------------------------------------------------------------------
 // ---------------------------------------------------------------------
