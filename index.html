@@ -175,6 +175,23 @@
   .item-btn-menu:hover{ background: #3a5c48; }
   .item-btn-menu .price{ color: #7fe0ab; }
 
+  .item-btn-verde{ background: #2f4a3a; border: 1px solid #4caf7d; }
+  .item-btn-verde:hover{ background: #3a5c48; }
+  .item-btn-verde .price{ color: #7fe0ab; }
+
+  .item-btn-giallo{ background: #4a4222; border: 1px solid #d4b83a; }
+  .item-btn-giallo:hover{ background: #5c5329; }
+  .item-btn-giallo .price{ color: #e8d478; }
+
+  .item-btn-rosso{ background: #4a2320; border: 1px solid #c0453b; }
+  .item-btn-rosso:hover{ background: #5c2b27; }
+  .item-btn-rosso .price{ color: #e8837a; }
+
+  .item-btn-bianco{ background: #eae3d3; border: 1px solid #cfc4a8; }
+  .item-btn-bianco:hover{ background: #ded4bd; }
+  .item-btn-bianco .name{ color: #2a2118; }
+  .item-btn-bianco .price{ color: #2a2118; }
+
   /* ORDER IN PROGRESS */
   .current-list{ min-height: 40px; margin-bottom: 14px; }
   .current-row{
@@ -716,6 +733,7 @@ const CATALOGO = [
   { id:'siciliana', base:'Siciliana', price:6.50, category:'🍕 Pizze rosse', voice:['sicilian'] },
   { id:'sottobosco', base:'Sottobosco', price:6.50, category:'🍕 Pizze rosse', voice:['sottobosc'] },
   { id:'menu_pizza', base:'Menu Pizza', price:10.00, category:'🍕 Pizze rosse', voice:['menu pizza'], isMenu:true },
+  { id:'focaccia', base:'Focaccia', price:2.50, category:'🍕 Pizze rosse', voice:['focaccia'] },
 
   // 🧀 PIZZE BIANCHE
   { id:'quattro_formaggi', base:'4 Formaggi', price:8.00, category:'🧀 Pizze bianche', voice:['quattro formaggi','4 formaggi'] },
@@ -731,6 +749,7 @@ const CATALOGO = [
   { id:'pugliese', base:'Pugliese', price:8.00, category:'🧀 Pizze bianche', voice:['pugliese'] },
   { id:'salernitana', base:'Salernitana', price:8.00, category:'🧀 Pizze bianche', voice:['salernitan'] },
   { id:'souffle_pizza', base:'Soufflé', price:7.50, category:'🧀 Pizze bianche', voice:['souffl','soffl'] },
+  { id:'bianca_salame', base:'Bianca al salame', price:7.00, category:'🧀 Pizze bianche', voice:['bianca al salame','bianca salame'] },
 
   // 📏 METRO E MIGNON
   { id:'metro_margherita', base:'Mezzo Metro Margherita', price:12.00, category:'📏 Metro e mignon', voice:['metro margherita','mezzo metro margherita'] },
@@ -776,26 +795,26 @@ const CATALOGO = [
   { id:'saltimbocca_veg_friarielli_intero', base:'Friarielli veg.', note:'intero', price:12.00, category:'🥗 Saltimbocca vegetariano', voice:['friarielli vegetariano intero'] },
 
   // 🍟 FRIGGITORIA
-  { id:'pizza_fritta_completa', base:'Pizza fritta completa', price:4.50, category:'🍟 Friggitoria', voice:['pizza fritta completa'] },
-  { id:'pizza_fritta_scarola_provola', base:'Pizza fritta scarola e provola', price:4.50, category:'🍟 Friggitoria', voice:['pizza fritta scarola e provola'] },
-  { id:'pizza_fritta_provola_pepe', base:'Pizza fritta provola e pepe', price:4.50, category:'🍟 Friggitoria', voice:['pizza fritta provola e pepe'] },
-  { id:'calzone_mozzarella', base:'Calzone Mozzarella', price:2.50, category:'🍟 Friggitoria', voice:['calzone mozzarella'] },
-  { id:'calzone_scarola', base:'Calzone Scarola', price:2.50, category:'🍟 Friggitoria', voice:['calzone scarola'] },
-  { id:'calzone_ricotta_salame', base:'Calzone Ricotta e Salame', price:2.50, category:'🍟 Friggitoria', voice:['calzone ricotta e salame','calzone ricotta salame'] },
-  { id:'calzone_mozzarella_pomodoro', base:'Calzone Mozzarella e pomodoro', price:2.50, category:'🍟 Friggitoria', voice:['calzone mozzarella e pomodoro','calzone mozzarella pomodoro'] },
-  { id:'calzone_mozzarella_prosciutto', base:'Calzone Mozzarella e prosciutto', price:2.50, category:'🍟 Friggitoria', voice:['calzone mozzarella e prosciutto','calzone mozzarella prosciutto'] },
-  { id:'calzone_mozzarella_pepe', base:'Calzone Mozzarella e pepe', price:2.50, category:'🍟 Friggitoria', voice:['calzone mozzarella e pepe','calzone mozzarella pepe'] },
+  { id:'pizza_fritta_completa', base:'Pizza fritta completa', price:4.50, category:'🍟 Friggitoria', voice:['pizza fritta completa'], colore:'verde' },
+  { id:'pizza_fritta_scarola_provola', base:'Pizza fritta scarola e provola', price:4.50, category:'🍟 Friggitoria', voice:['pizza fritta scarola e provola'], colore:'verde' },
+  { id:'pizza_fritta_provola_pepe', base:'Pizza fritta provola e pepe', price:4.50, category:'🍟 Friggitoria', voice:['pizza fritta provola e pepe'], colore:'verde' },
+  { id:'calzone_mozzarella', base:'Calzone Mozzarella', price:2.50, category:'🍟 Friggitoria', voice:['calzone mozzarella'], colore:'giallo' },
+  { id:'calzone_scarola', base:'Calzone Scarola', price:2.50, category:'🍟 Friggitoria', voice:['calzone scarola'], colore:'giallo' },
+  { id:'calzone_ricotta_salame', base:'Calzone Ricotta e Salame', price:2.50, category:'🍟 Friggitoria', voice:['calzone ricotta e salame','calzone ricotta salame'], colore:'giallo' },
+  { id:'calzone_mozzarella_pomodoro', base:'Calzone Mozzarella e pomodoro', price:2.50, category:'🍟 Friggitoria', voice:['calzone mozzarella e pomodoro','calzone mozzarella pomodoro'], colore:'giallo' },
+  { id:'calzone_mozzarella_prosciutto', base:'Calzone Mozzarella e prosciutto', price:2.50, category:'🍟 Friggitoria', voice:['calzone mozzarella e prosciutto','calzone mozzarella prosciutto'], colore:'giallo' },
+  { id:'calzone_mozzarella_pepe', base:'Calzone Mozzarella e pepe', price:2.50, category:'🍟 Friggitoria', voice:['calzone mozzarella e pepe','calzone mozzarella pepe'], colore:'giallo' },
   { id:'panino_fiorino', base:'Panino (fiorino)', price:3.00, category:'🍟 Friggitoria', voice:['fiorino','panino'] },
-  { id:'montanara', base:'Montanara', price:2.00, category:'🍟 Friggitoria', voice:['montanar'] },
+  { id:'montanara', base:'Montanara', price:2.00, category:'🍟 Friggitoria', voice:['montanar'], colore:'rosso' },
   { id:'crocche', base:'Crocchè', price:1.00, category:'🍟 Friggitoria', voice:['crocché','crocche'] },
   { id:'crocche_wurstel', base:'Crocchè con würstel', price:1.50, category:'🍟 Friggitoria', voice:['crocché con würstel','crocche wurstel'] },
   { id:'medaglione', base:'Medaglione', price:1.50, category:'🍟 Friggitoria', voice:['medaglion'] },
-  { id:'arancino', base:'Arancino al pomodoro', price:1.00, category:'🍟 Friggitoria', voice:['arancino al pomodoro','arancin'], flavorFree:true },
-  { id:'arancino_cacio', base:'Arancino cacio', price:1.00, category:'🍟 Friggitoria', voice:['arancino cacio'], flavorFree:true },
-  { id:'arancino_4formaggi', base:'Arancino 4 formaggi', price:1.00, category:'🍟 Friggitoria', voice:['arancino quattro formaggi','arancino 4 formaggi'], flavorFree:true },
+  { id:'arancino', base:'Arancino al pomodoro', price:1.00, category:'🍟 Friggitoria', voice:['arancino al pomodoro','arancin'], flavorFree:true, colore:'bianco' },
+  { id:'arancino_cacio', base:'Arancino cacio', price:1.00, category:'🍟 Friggitoria', voice:['arancino cacio'], flavorFree:true, colore:'bianco' },
+  { id:'arancino_4formaggi', base:'Arancino 4 formaggi', price:1.00, category:'🍟 Friggitoria', voice:['arancino quattro formaggi','arancino 4 formaggi'], flavorFree:true, colore:'bianco' },
   { id:'ragu_fritto', base:'Ragù', price:2.00, category:'🍟 Friggitoria', voice:['ragù','ragu'] },
   { id:'frittatina', base:'Frittatina', price:2.00, category:'🍟 Friggitoria', voice:['frittatin'], flavorFree:true },
-  { id:'patatine_fritte', base:'Patatine', price:2.50, category:'🍟 Friggitoria', voice:['patatin'] },
+  { id:'patatine_fritte', base:'Patatine', price:2.50, category:'🍟 Friggitoria', voice:['patatin'], colore:'giallo' },
   { id:'wurstel_camicia', base:'Würstel in camicia', price:0.50, category:'🍟 Friggitoria', voice:['würstel in camicia','wurstel in camicia'] },
   { id:'trancio_margherita', base:'Trancio margherita', price:1.50, category:'🍟 Friggitoria', voice:['trancio margherita'] },
   { id:'trancio_ripieno', base:'Trancio ripieno', price:3.50, category:'🍟 Friggitoria', voice:['trancio ripieno','trancio'] },
@@ -934,7 +953,7 @@ function renderMenu(){
       <div class="cat-title" style="color:${COLORI_CATEGORIA[cat] || '#a8977d'};">${cat}</div>
       <div class="btn-grid">
         ${CATALOGO.filter(p => p.category === cat).map(p => `
-          <button class="item-btn ${p.isMenu ? 'item-btn-menu' : ''}" data-id="${p.id}" style="--cat-color:${COLORI_CATEGORIA[cat] || 'var(--gold)'};">
+          <button class="item-btn ${p.isMenu ? 'item-btn-menu' : ''} ${p.colore ? 'item-btn-' + p.colore : ''}" data-id="${p.id}" style="--cat-color:${COLORI_CATEGORIA[cat] || 'var(--gold)'};">
             <span class="name">${p.base}${p.note ? ' <em style="color:#a8977d;font-style:normal;">(' + p.note + ')</em>' : ''}</span>
             ${p.prezzoDaDefinire ? '' : `<span class="price">${fmtEuro(p.price)}</span>`}
           </button>
