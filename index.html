@@ -833,6 +833,7 @@ let editandoLineId = null; // lineId della riga di cui si sta scrivendo/dettando
 let farciscendoLineId = null; // lineId di un Mezzo Metro Farcito in attesa che si scelgano i gusti
 let farciscendoGusti = [];    // gusti scelti finora per quella riga (max 2)
 let nomeClienteCorrente = ''; // nome cliente per l'ordine in corso (opzionale)
+let tavoloCorrente = null; // numero del tavolo assegnato all'ordine in corso (null = asporto/nessun tavolo), indipendente dal nome cliente
 let orarioRitiroCorrente = ''; // orario di ritiro (facoltativo, formato "HH:MM"), per ordini telefonici
 
 const fmtEuro = n => '€' + n.toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2});
@@ -861,6 +862,7 @@ function salvaStato(){
       currentOrder,
       editingOrderNumber,
       nomeClienteCorrente,
+      tavoloCorrente,
       orarioRitiroCorrente
     };
     localStorage.setItem(CHIAVE_STATO, JSON.stringify(stato));
@@ -880,6 +882,7 @@ function caricaStato(){
     currentOrder = stato.currentOrder || [];
     editingOrderNumber = (stato.editingOrderNumber === undefined) ? null : stato.editingOrderNumber;
     nomeClienteCorrente = stato.nomeClienteCorrente || '';
+    tavoloCorrente = (stato.tavoloCorrente !== undefined && stato.tavoloCorrente !== null) ? stato.tavoloCorrente : null;
     orarioRitiroCorrente = stato.orarioRitiroCorrente || '';
 
     // Scarta eventuali righe che fanno riferimento a prodotti non più
@@ -1046,6 +1049,7 @@ function htmlComandaCucina(ordine){
   return `
     <div class="receipt">
       <div class="r-head">SOUFFLÉ &nbsp; N.${String(ordine.numero).padStart(3,'0')} &nbsp; ${fmtData(ordine.orario)} ${fmtOra(ordine.orario)}</div>
+      ${ordine.tavolo ? `<div class="r-cliente">Tavolo ${ordine.tavolo}</div>` : ''}
       ${ordine.nomeCliente ? `<div class="r-cliente">👤 ${ordine.nomeCliente}</div>` : ''}
       ${ordine.orarioRitiro ? `<div class="r-ritiro">⏰ RITIRO ORE ${ordine.orarioRitiro}</div>` : ''}
       <hr>
@@ -1068,6 +1072,7 @@ function htmlScontrinoCliente(ordine){
   return `
     <div class="receipt">
       <div class="r-head">SOUFFLÉ &nbsp; N.${String(ordine.numero).padStart(3,'0')} &nbsp; ${fmtData(ordine.orario)} ${fmtOra(ordine.orario)}</div>
+      ${ordine.tavolo ? `<div class="r-cliente">Tavolo ${ordine.tavolo}</div>` : ''}
       ${ordine.nomeCliente ? `<div class="r-cliente">👤 ${ordine.nomeCliente}</div>` : ''}
       ${ordine.orarioRitiro ? `<div class="r-ritiro">⏰ RITIRO ORE ${ordine.orarioRitiro}</div>` : ''}
       <hr>
@@ -1095,6 +1100,7 @@ function htmlComandaCucinaEditabile(righe, numero, orario){
   return `
     <div class="receipt">
       <div class="r-head">SOUFFLÉ &nbsp; N.${String(numero).padStart(3,'0')} &nbsp; ${fmtData(orario)} ${fmtOra(orario)}</div>
+      ${tavoloCorrente ? `<div class="r-cliente">Tavolo ${tavoloCorrente}</div>` : ''}
       ${nomeClienteCorrente.trim() ? `<div class="r-cliente">👤 ${nomeClienteCorrente.trim()}</div>` : ''}
       ${orarioRitiroCorrente ? `<div class="r-ritiro">⏰ RITIRO ORE ${orarioRitiroCorrente}</div>` : ''}
       <hr>
@@ -1392,13 +1398,14 @@ function finalizzaOrdine(){
       ordine.totale = totale;
       ordine.nomeCliente = nomeClienteCorrente.trim() || null;
       ordine.orarioRitiro = orarioRitiroCorrente || null;
+      ordine.tavolo = tavoloCorrente || null;
       ordineFinale = ordine;
     }
     annuncio = `Ordine ${ordineFinale.numero} aggiornato. Nuovo totale ${Math.round(totale)} euro.`;
     uscitaModalitaModifica();
   } else {
     orderCounter += 1;
-    ordineFinale = { numero: orderCounter, orario: new Date(), voci, totale, nomeCliente: nomeClienteCorrente.trim() || null, orarioRitiro: orarioRitiroCorrente || null };
+    ordineFinale = { numero: orderCounter, orario: new Date(), voci, totale, nomeCliente: nomeClienteCorrente.trim() || null, orarioRitiro: orarioRitiroCorrente || null, tavolo: tavoloCorrente || null };
     openOrders.unshift(ordineFinale);
     annuncio = `Ordine ${ordineFinale.numero}. Totale ${Math.round(totale)} euro.`;
   }
@@ -1406,6 +1413,7 @@ function finalizzaOrdine(){
   currentOrder = [];
   nomeClienteCorrente = '';
   orarioRitiroCorrente = '';
+  tavoloCorrente = null;
   document.getElementById('nomeClienteInput').value = '';
   document.getElementById('orarioRitiroInput').value = '';
   renderCurrent();
@@ -1473,6 +1481,7 @@ function padDestraEsc(sinistra, destra, larghezza){
 function escComandaCucina(ordine){
   let t = P_INIT + '\n\n\n\n\n' + P_CENTRO + P_BOLD_ON; // ~2cm di spazio prima dell'intestazione, per agganciare la comanda nel porta-comande
   t += `SOUFFLE  N.${String(ordine.numero).padStart(3,'0')}  ${fmtData(ordine.orario)} ${fmtOra(ordine.orario)}\n`;
+  if(ordine.tavolo) t += 'TAVOLO ' + ordine.tavolo + '\n';
   if(ordine.nomeCliente) t += sanificaPerStampa(ordine.nomeCliente) + '\n';
   if(ordine.orarioRitiro) t += P_BOLD_ON + '*** RITIRO ORE ' + ordine.orarioRitiro + ' ***' + P_BOLD_OFF + '\n';
   t += P_BOLD_OFF + P_SINISTRA + '-'.repeat(RIGA_ESC) + '\n';
@@ -1495,6 +1504,7 @@ function escComandaCucina(ordine){
 function escScontrinoCliente(ordine){
   let t = P_INIT + P_CENTRO + P_BOLD_ON;
   t += `SOUFFLE  N.${String(ordine.numero).padStart(3,'0')}  ${fmtData(ordine.orario)} ${fmtOra(ordine.orario)}\n`;
+  if(ordine.tavolo) t += 'TAVOLO ' + ordine.tavolo + '\n';
   if(ordine.nomeCliente) t += sanificaPerStampa(ordine.nomeCliente) + '\n';
   if(ordine.orarioRitiro) t += P_BOLD_ON + '*** RITIRO ORE ' + ordine.orarioRitiro + ' ***' + P_BOLD_OFF + '\n';
   t += P_BOLD_OFF + P_SINISTRA + '-'.repeat(RIGA_ESC) + '\n';
@@ -1640,6 +1650,7 @@ function enterEditMode(numero){
   document.getElementById('nomeClienteInput').value = nomeClienteCorrente;
   orarioRitiroCorrente = ordine.orarioRitiro || '';
   document.getElementById('orarioRitiroInput').value = orarioRitiroCorrente;
+  tavoloCorrente = ordine.tavolo || null;
 
   document.getElementById('orderPanelTitle').textContent = `Modifica ordine N.${String(numero).padStart(3,'0')}`;
 
@@ -1657,6 +1668,7 @@ function uscitaModalitaModifica(){
   currentOrder = [];
   nomeClienteCorrente = '';
   orarioRitiroCorrente = '';
+  tavoloCorrente = null;
   document.getElementById('nomeClienteInput').value = '';
   document.getElementById('orarioRitiroInput').value = '';
   document.getElementById('orderPanelTitle').textContent = 'Ordine in corso';
@@ -1673,17 +1685,18 @@ function apriSpostaOverlay(numero){
 
   let opzioni = '';
   for(let n = 1; n <= NUMERO_TAVOLI; n++){
-    const nomeTavolo = `Tavolo ${n}`;
-    if(ordine.nomeCliente === nomeTavolo) continue; // è già lì
-    const occupato = openOrders.some(o => o.nomeCliente === nomeTavolo && o.numero !== numero);
-    opzioni += `<button class="sposta-opzione ${occupato ? 'occupata' : ''}" data-dest="${nomeTavolo}" ${occupato ? 'disabled' : ''}>
-      ${nomeTavolo}${occupato ? ' <span class=\"sposta-nota\">(occupato)</span>' : ''}
+    if(ordine.tavolo === n) continue; // è già lì
+    const occupato = openOrders.some(o => o.tavolo === n && o.numero !== numero);
+    opzioni += `<button class="sposta-opzione ${occupato ? 'occupata' : ''}" data-dest="${n}" ${occupato ? 'disabled' : ''}>
+      Tavolo ${n}${occupato ? ' <span class=\"sposta-nota\">(occupato)</span>' : ''}
     </button>`;
   }
-  opzioni += `<button class="sposta-opzione" data-dest="__asporto__">📦 Asporto (nessun tavolo)</button>`;
+  if(ordine.tavolo){
+    opzioni += `<button class="sposta-opzione" data-dest="__asporto__">📦 Asporto (nessun tavolo)</button>`;
+  }
 
   document.getElementById('spostaContenuto').innerHTML = `
-    <p style="margin:0 0 14px;color:#c9bda3;">Ordine N.${String(numero).padStart(3,'0')} — dove lo sposto?</p>
+    <p style="margin:0 0 14px;color:#c9bda3;">Ordine N.${String(numero).padStart(3,'0')} — dove lo sposto? (il nome cliente resta invariato)</p>
     <div class="sposta-lista">${opzioni}</div>
   `;
   document.getElementById('spostaOverlay').dataset.numero = numero;
@@ -1697,10 +1710,9 @@ function apriSpostaOverlay(numero){
 function eseguiSposta(numero, dest){
   const ordine = openOrders.find(o => o.numero === numero);
   if(!ordine) return;
-  ordine.nomeCliente = (dest === '__asporto__') ? null : dest;
+  ordine.tavolo = (dest === '__asporto__') ? null : parseInt(dest);
   if(editingOrderNumber === numero){
-    nomeClienteCorrente = ordine.nomeCliente || '';
-    document.getElementById('nomeClienteInput').value = nomeClienteCorrente;
+    tavoloCorrente = ordine.tavolo;
   }
   document.getElementById('spostaOverlay').style.display = 'none';
   renderBoard();
@@ -1736,6 +1748,7 @@ document.getElementById('nuovoOrdineBtn').addEventListener('click', () => {
   currentOrder = [];
   nomeClienteCorrente = '';
   orarioRitiroCorrente = '';
+  tavoloCorrente = null;
   document.getElementById('nomeClienteInput').value = '';
   document.getElementById('orarioRitiroInput').value = '';
   document.getElementById('orderPanelTitle').textContent = 'Ordine in corso';
@@ -1752,19 +1765,19 @@ document.getElementById('nuovoOrdineBtn').addEventListener('click', () => {
 const NUMERO_TAVOLI = 6;
 
 function selezionaTavolo(n){
-  const nome = `Tavolo ${n}`;
-  const ordineEsistente = openOrders.find(o => o.nomeCliente === nome);
+  const ordineEsistente = openOrders.find(o => o.tavolo === n);
 
   if(ordineEsistente){
     enterEditMode(ordineEsistente.numero);
   } else {
     if(editingOrderNumber !== null) uscitaModalitaModifica();
     currentOrder = [];
-    nomeClienteCorrente = nome;
+    nomeClienteCorrente = '';
     orarioRitiroCorrente = '';
-    document.getElementById('nomeClienteInput').value = nome;
+    tavoloCorrente = n;
+    document.getElementById('nomeClienteInput').value = '';
     document.getElementById('orarioRitiroInput').value = '';
-    document.getElementById('orderPanelTitle').textContent = 'Ordine in corso';
+    document.getElementById('orderPanelTitle').textContent = `Tavolo ${n}`;
     document.getElementById('editBanner').style.display = 'none';
   }
   renderCurrent();
@@ -1775,8 +1788,7 @@ function renderTavoli(){
   const grid = document.getElementById('tavoliGrid');
   grid.innerHTML = '';
   for(let n = 1; n <= NUMERO_TAVOLI; n++){
-    const nome = `Tavolo ${n}`;
-    const occupato = openOrders.some(o => o.nomeCliente === nome);
+    const occupato = openOrders.some(o => o.tavolo === n);
     const btn = document.createElement('button');
     btn.className = `tavolo-btn-grande ${occupato ? 'occupato' : 'libero'}`;
     btn.innerHTML = `${n}<span class="etichetta">${occupato ? 'occupato' : 'libero'}</span>`;
@@ -1823,6 +1835,7 @@ function renderBoard(){
       return `
         <div class="order-card" data-numero="${o.numero}">
           <span class="num">N.${String(o.numero).padStart(3,'0')}</span>
+          ${o.tavolo ? `<span class="cliente">Tavolo ${o.tavolo}</span>` : ''}
           ${o.nomeCliente ? `<span class="cliente">${o.nomeCliente}</span>` : ''}
           <span class="ritiro-badge">⏰ ${o.orarioRitiro}</span>
           <span class="ritiro-countdown">tra ${m < 60 ? m + ' min' : Math.floor(m/60) + 'h ' + (m%60) + 'min'}</span>
@@ -1845,6 +1858,7 @@ function renderBoard(){
     return `
       <div class="order-card ${late ? 'late' : ''} ${ritiroAttivato ? 'ritiro-attivato' : ''}" data-numero="${o.numero}">
         <span class="num">N.${String(o.numero).padStart(3,'0')}</span>
+        ${o.tavolo ? `<span class="cliente">Tavolo ${o.tavolo}</span>` : ''}
         ${o.nomeCliente ? `<span class="cliente">${o.nomeCliente}</span>` : ''}
         ${o.orarioRitiro ? `<span class="ritiro-badge">⏰ ${o.orarioRitiro}</span>` : ''}
         <span class="elapsed">${late ? '⚠️' : ''} ${Math.floor(minuti)}′ · ${fmtEuro(o.totale)}</span>
