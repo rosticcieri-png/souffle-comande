@@ -599,6 +599,7 @@
     border-radius: 8px; padding: 8px 12px; font-size: 14px; cursor:pointer;
   }
   .r-lattosio-btn.attivo{ background: #2f4a3a; border-color: #4caf7d; color: #b7f0cc; font-weight:700; }
+  .r-lattosio-btn-riga{ padding: 6px 8px; font-size: 13px; }
 
   @media (prefers-reduced-motion: reduce){
     .mic-btn.listening{ animation: none; }
@@ -1169,6 +1170,9 @@ function htmlComandaCucinaEditabile(righe, numero, orario){
             <span>${l.qty} ${prod(l.catId).base}${noteLinea(l).map(g => `<br><small style="color:var(--ink-soft);">${g}</small>`).join('')}</span>
             <div class="r-row-controls">
               <button class="r-price-tag" data-lineid="${l.lineId}" title="Tocca per correggere il prezzo">${fmtEuro(prezzoLinea(l))}</button>
+              ${cat !== '🍺 Bevande' ? `
+              <button class="r-lattosio-btn r-lattosio-btn-riga ${l.supplLattosio === 1 ? 'attivo' : ''}" data-lineid="${l.lineId}" data-valore="1" title="Mozzarella senza lattosio +1€">🥛+1€</button>
+              <button class="r-lattosio-btn r-lattosio-btn-riga ${l.supplLattosio === 2 ? 'attivo' : ''}" data-lineid="${l.lineId}" data-valore="2" title="Mozzarella senza lattosio +2€">🥛+2€</button>` : ''}
               <button class="r-edit-note" data-lineid="${l.lineId}" title="Aggiungi/modifica variazione">✎</button>
               <button class="r-step" data-lineid="${l.lineId}" data-delta="-1">−</button>
               <span class="r-qty">${l.qty}</span>
@@ -1292,7 +1296,7 @@ function renderReceiptPreview(){
     view.innerHTML = htmlComandaCucinaEditabile(righe, numeroPreview, now);
     collegaControlliEditabili(view);
   } else {
-    const ordineVirtuale = { numero: numeroPreview, orario: now, voci: righe.map(l => ({ catId:l.catId, qty:l.qty, extra:l.extra, prezzoManuale:l.prezzoManuale })) };
+    const ordineVirtuale = { numero: numeroPreview, orario: now, voci: righe.map(l => ({ catId:l.catId, qty:l.qty, extra:l.extra, prezzoManuale:l.prezzoManuale, supplLattosio:l.supplLattosio || 0 })) };
     view.innerHTML = htmlScontrinoCliente(ordineVirtuale);
   }
 }
