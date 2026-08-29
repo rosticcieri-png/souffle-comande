@@ -271,8 +271,8 @@
     #printArea .r-row{ flex-wrap: wrap; }
     /* Nelle stampe i nomi dei prodotti sono più grandi e in grassetto. */
     #printArea .r-row > span:first-child{
-      font-size: 18px;
-      line-height: 1.25;
+      font-size: 20px;
+      line-height: 1.2;
       font-weight: 700;
     }
     #printArea .r-note{ color:#333; }
@@ -1566,7 +1566,7 @@ function escComandaCucina(ordine){
     t += P_BOLD_ON + cat.replace(/[^\x00-\x7F]/g, '') + P_BOLD_OFF + '\n';
     vociCucina.filter(v => prod(v.catId).category === cat).forEach(v => {
       const p = prod(v.catId);
-      t += ESC + '!' + '\x01' + P_BOLD_ON + sanificaPerStampa(`${v.qty} ${p.base}`) + P_BOLD_OFF + ESC + '!' + '\x00' + '\n';
+      t += ESC + '!' + '\x10' + P_BOLD_ON + sanificaPerStampa(`${v.qty} ${p.base}`) + P_BOLD_OFF + ESC + '!' + '\x00' + '\n';
       if(p.note) t += P_GRASSETTO_VARIAZIONE_ON + `  - ${sanificaPerStampa(p.note).toUpperCase()}\n` + P_GRASSETTO_VARIAZIONE_OFF;
       noteLineaEsc(v).forEach(g => t += P_GRASSETTO_VARIAZIONE_ON + `  - ${sanificaPerStampa(g).toUpperCase()}\n` + P_GRASSETTO_VARIAZIONE_OFF);
     });
@@ -1592,7 +1592,7 @@ function escScontrinoCliente(ordine){
       totale += prezzo * v.qty;
       const label = p.base + (p.note ? ' ' + p.note : '');
       const testoVisibile = `${v.qty} ${label}`;
-      const testoFormattato = ESC + '!' + '\x01' + P_BOLD_ON + sanificaPerStampa(testoVisibile) + P_BOLD_OFF + ESC + '!' + '\x00';
+      const testoFormattato = ESC + '!' + '\x10' + P_BOLD_ON + sanificaPerStampa(testoVisibile) + P_BOLD_OFF + ESC + '!' + '\x00';
       t += padDestraEscFormattata(testoVisibile, testoFormattato, fmtEuroEsc(prezzo * v.qty), RIGA_ESC) + '\n';
       noteLineaEsc(v).forEach(g => t += P_GRASSETTO_VARIAZIONE_ON + `  ${sanificaPerStampa(g).toUpperCase()}\n` + P_GRASSETTO_VARIAZIONE_OFF);
     });
