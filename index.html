@@ -593,6 +593,12 @@
   }
   .save-note-btn{ background: var(--basil); color: var(--ink); }
   .cancel-note-btn{ background: var(--wood-lighter); color: var(--paper); border: 1px solid var(--line) !important; }
+  .r-lattosio-controls{ display:flex; gap:8px; margin-bottom:8px; flex-wrap: wrap; }
+  .r-lattosio-btn{
+    background: var(--wood-lighter); color: var(--paper); border: 1px solid var(--line);
+    border-radius: 8px; padding: 8px 12px; font-size: 14px; cursor:pointer;
+  }
+  .r-lattosio-btn.attivo{ background: #2f4a3a; border-color: #4caf7d; color: #b7f0cc; font-weight:700; }
 
   @media (prefers-reduced-motion: reduce){
     .mic-btn.listening{ animation: none; }
@@ -1035,8 +1041,23 @@ function lineLabel(line){
 // Prezzo effettivo di una riga: quello corretto a mano se presente,
 // altrimenti quello del catalogo. Utile per prodotti a gusto/prezzo
 // variabile (es. arancini, frittatine) che cambiano ogni giorno.
+// Include anche l'eventuale supplemento "mozzarella senza lattosio".
 function prezzoLinea(line){
-  return (line.prezzoManuale !== undefined && line.prezzoManuale !== null) ? line.prezzoManuale : prod(line.catId).price;
+  const base = (line.prezzoManuale !== undefined && line.prezzoManuale !== null) ? line.prezzoManuale : prod(line.catId).price;
+  return base + (line.supplLattosio || 0);
+}
+
+// Elenco delle note/variazioni di una riga da mostrare/stampare (variazione
+// libera scritta/dettata + eventuale supplemento mozzarella senza lattosio).
+function noteLinea(l){
+  const note = righeExtra(l.extra);
+  if(l.supplLattosio) note.push(`Mozzarella senza lattosio (+${fmtEuro(l.supplLattosio)})`);
+  return note;
+}
+function noteLineaEsc(l){
+  const note = righeExtra(l.extra);
+  if(l.supplLattosio) note.push(`Mozzarella senza lattosio (+${fmtEuroEsc(l.supplLattosio)})`);
+  return note;
 }
 
 function currentTotal(){
@@ -1078,17 +1099,14 @@ function htmlComandaCucina(ordine){
         <div class="r-cat">${cat}</div>
         ${vociCucina.filter(v => prod(v.catId).category === cat).map(v => {
           const p = prod(v.catId);
-          return `<div class="r-row"><span>${v.qty} ${p.base}</span></div>${p.note ? `<div class="r-note">- ${p.note}</div>` : ''}${righeExtra(v.extra).map(g => `<div class="r-note">- ${g}</div>`).join('')}`;
+          return `<div class="r-row"><span>${v.qty} ${p.base}</span></div>${p.note ? `<div class="r-note">- ${p.note}</div>` : ''}${noteLinea(v).map(g => `<div class="r-note">- ${g}</div>`).join('')}`;
         }).join('')}
       `).join('')}
     </div>`;
 }
 
 function htmlScontrinoCliente(ordine){
-  const totale = ordine.voci.reduce((sum, v) => {
-    const prezzo = (v.prezzoManuale !== undefined && v.prezzoManuale !== null) ? v.prezzoManuale : prod(v.catId).price;
-    return sum + prezzo * v.qty;
-  }, 0);
+  const totale = ordine.voci.reduce((sum, v) => sum + prezzoLinea(v) * v.qty, 0);
   const categorie = [...new Set(ordine.voci.map(v => prod(v.catId).category))];
   return `
     <div class="receipt">
@@ -1102,8 +1120,8 @@ function htmlScontrinoCliente(ordine){
         ${ordine.voci.filter(v => prod(v.catId).category === cat).map(v => {
           const p = prod(v.catId);
           const label = p.base + (p.note ? ' ' + p.note : '');
-          const prezzo = (v.prezzoManuale !== undefined && v.prezzoManuale !== null) ? v.prezzoManuale : p.price;
-          return `<div class="r-row"><span>${v.qty} ${label}</span><span>${fmtEuro(prezzo * v.qty)}</span></div>${righeExtra(v.extra).map(g => `<div class="r-note">- ${g}</div>`).join('')}`;
+          const prezzo = prezzoLinea(v);
+          return `<div class="r-row"><span>${v.qty} ${label}</span><span>${fmtEuro(prezzo * v.qty)}</span></div>${noteLinea(v).map(g => `<div class="r-note">- ${g}</div>`).join('')}`;
         }).join('')}
       `).join('')}
       <hr>
@@ -1136,6 +1154,11 @@ function htmlComandaCucinaEditabile(righe, numero, orario){
                   <input type="text" id="editNoteInput" value="${(l.extra || '').replace(/"/g,'&quot;')}" placeholder="es. senza origano, con pepe...">
                   <button class="mic-btn" id="editNoteMic" title="Detta la variazione">🎤</button>
                 </div>
+                ${cat !== '🍺 Bevande' ? `
+                <div class="r-lattosio-controls">
+                  <button class="r-lattosio-btn ${l.supplLattosio === 1 ? 'attivo' : ''}" data-lineid="${l.lineId}" data-valore="1">🥛 Senza lattosio +1€</button>
+                  <button class="r-lattosio-btn ${l.supplLattosio === 2 ? 'attivo' : ''}" data-lineid="${l.lineId}" data-valore="2">🥛 Senza lattosio +2€</button>
+                </div>` : ''}
                 <div class="r-editing-actions">
                   <button class="save-note-btn" data-lineid="${l.lineId}">✔ Salva</button>
                   <button class="cancel-note-btn" data-lineid="${l.lineId}">Annulla</button>
@@ -1143,7 +1166,7 @@ function htmlComandaCucinaEditabile(righe, numero, orario){
               </div>`;
           }
           return `<div class="r-row">
-            <span>${l.qty} ${prod(l.catId).base}${righeExtra(l.extra).map(g => `<br><small style="color:var(--ink-soft);">${g}</small>`).join('')}</span>
+            <span>${l.qty} ${prod(l.catId).base}${noteLinea(l).map(g => `<br><small style="color:var(--ink-soft);">${g}</small>`).join('')}</span>
             <div class="r-row-controls">
               <button class="r-price-tag" data-lineid="${l.lineId}" title="Tocca per correggere il prezzo">${fmtEuro(prezzoLinea(l))}</button>
               <button class="r-edit-note" data-lineid="${l.lineId}" title="Aggiungi/modifica variazione">✎</button>
@@ -1215,6 +1238,17 @@ function collegaControlliEditabili(view){
   view.querySelectorAll('.cancel-note-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       editandoLineId = null;
+      renderCurrent();
+    });
+  });
+  view.querySelectorAll('.r-lattosio-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lineId = parseInt(btn.dataset.lineid);
+      const valore = parseInt(btn.dataset.valore);
+      const linea = currentOrder.find(l => l.lineId === lineId);
+      if(!linea) return;
+      // Tocco di nuovo lo stesso valore -> lo tolgo (toggle)
+      linea.supplLattosio = (linea.supplLattosio === valore) ? 0 : valore;
       renderCurrent();
     });
   });
@@ -1409,7 +1443,7 @@ function finalizzaOrdine(){
   if(righe.length === 0) return null;
 
   const totale = currentTotal();
-  const voci = righe.map(l => ({ catId: l.catId, qty: l.qty, extra: l.extra || null, prezzoManuale: (l.prezzoManuale !== undefined ? l.prezzoManuale : null) }));
+  const voci = righe.map(l => ({ catId: l.catId, qty: l.qty, extra: l.extra || null, prezzoManuale: (l.prezzoManuale !== undefined ? l.prezzoManuale : null), supplLattosio: l.supplLattosio || 0 }));
   let ordineFinale, annuncio;
 
   if(editingOrderNumber !== null){
@@ -1490,6 +1524,10 @@ const ESC = '\x1B', GS = '\x1D';
 const P_INIT = ESC + '@';
 const P_BOLD_ON = ESC + 'E' + '\x01';
 const P_BOLD_OFF = ESC + 'E' + '\x00';
+const P_ALTO_ON = GS + '!' + '\x01'; // altezza doppia (solo altezza, non larghezza: le colonne restano allineate)
+const P_ALTO_OFF = GS + '!' + '\x00';
+const P_FONT_PICCOLO = ESC + 'M' + '\x01'; // font B: più piccolo e diverso da quello standard, per far notare le variazioni
+const P_FONT_NORMALE = ESC + 'M' + '\x00'; // torna al font A standard
 const P_CENTRO = ESC + 'a' + '\x01';
 const P_SINISTRA = ESC + 'a' + '\x00';
 const P_TAGLIO = GS + 'V' + '\x00';
@@ -1497,6 +1535,13 @@ const P_TAGLIO = GS + 'V' + '\x00';
 function padDestraEsc(sinistra, destra, larghezza){
   const spazi = larghezza - sinistra.length - destra.length;
   return sinistra + ' '.repeat(Math.max(spazi, 1)) + destra;
+}
+// Come padDestraEsc, ma per quando la parte sinistra contiene codici di
+// formattazione (grassetto/altezza) che non occupano spazio sulla carta:
+// il conteggio dei caratteri per l'allineamento usa il testo SENZA codici.
+function padDestraEscFormattata(sinistraVisibile, sinistraConCodici, destra, larghezza){
+  const spazi = larghezza - sinistraVisibile.length - destra.length;
+  return sinistraConCodici + ' '.repeat(Math.max(spazi, 1)) + destra;
 }
 
 function escComandaCucina(ordine){
@@ -1513,9 +1558,9 @@ function escComandaCucina(ordine){
     t += P_BOLD_ON + cat.replace(/[^\x00-\x7F]/g, '') + P_BOLD_OFF + '\n';
     vociCucina.filter(v => prod(v.catId).category === cat).forEach(v => {
       const p = prod(v.catId);
-      t += `${v.qty} ${p.base}\n`;
-      if(p.note) t += `  - ${p.note}\n`;
-      righeExtra(v.extra).forEach(g => t += `  - ${g}\n`);
+      t += P_ALTO_ON + P_BOLD_ON + sanificaPerStampa(`${v.qty} ${p.base}`) + P_BOLD_OFF + P_ALTO_OFF + '\n';
+      if(p.note) t += P_FONT_PICCOLO + `  - ${sanificaPerStampa(p.note)}\n` + P_FONT_NORMALE;
+      noteLineaEsc(v).forEach(g => t += P_FONT_PICCOLO + `  - ${sanificaPerStampa(g)}\n` + P_FONT_NORMALE);
     });
   });
   t += '\n\n\n' + P_TAGLIO; // spazio normale dopo, il taglio è già più in basso
@@ -1535,11 +1580,13 @@ function escScontrinoCliente(ordine){
     t += P_BOLD_ON + cat.replace(/[^\x00-\x7F]/g, '') + P_BOLD_OFF + '\n';
     ordine.voci.filter(v => prod(v.catId).category === cat).forEach(v => {
       const p = prod(v.catId);
-      const prezzo = (v.prezzoManuale !== undefined && v.prezzoManuale !== null) ? v.prezzoManuale : p.price;
+      const prezzo = prezzoLinea(v);
       totale += prezzo * v.qty;
       const label = p.base + (p.note ? ' ' + p.note : '');
-      t += padDestraEsc(`${v.qty} ${label}`, fmtEuroEsc(prezzo * v.qty), RIGA_ESC) + '\n';
-      righeExtra(v.extra).forEach(g => t += `  ${g}\n`);
+      const testoVisibile = `${v.qty} ${label}`;
+      const testoFormattato = P_ALTO_ON + P_BOLD_ON + sanificaPerStampa(testoVisibile) + P_BOLD_OFF + P_ALTO_OFF;
+      t += padDestraEscFormattata(testoVisibile, testoFormattato, fmtEuroEsc(prezzo * v.qty), RIGA_ESC) + '\n';
+      noteLineaEsc(v).forEach(g => t += P_FONT_PICCOLO + `  ${sanificaPerStampa(g)}\n` + P_FONT_NORMALE);
     });
   });
   t += '-'.repeat(RIGA_ESC) + '\n';
