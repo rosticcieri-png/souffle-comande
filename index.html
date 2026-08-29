@@ -269,12 +269,6 @@
       width: 100%; box-sizing: border-box;
     }
     #printArea .r-row{ flex-wrap: wrap; }
-    /* Nelle stampe i nomi dei prodotti sono più grandi e in grassetto. */
-    #printArea .r-row > span:first-child{
-      font-size: 20px;
-      line-height: 1.2;
-      font-weight: 700;
-    }
     #printArea .r-note{ color:#333; }
     #printArea .print-pagebreak{ page-break-after: always; }
   }
@@ -1534,6 +1528,8 @@ const ESC = '\x1B', GS = '\x1D';
 const P_INIT = ESC + '@';
 const P_BOLD_ON = ESC + 'E' + '\x01';
 const P_BOLD_OFF = ESC + 'E' + '\x00';
+const P_GRANDE_ON = GS + '!' + '\x11'; // doppia altezza + doppia larghezza (grande su entrambe le dimensioni, non "stirato")
+const P_GRANDE_OFF = GS + '!' + '\x00';
 const P_GRASSETTO_VARIAZIONE_ON = ESC + 'E' + '\x01'; // grassetto per le variazioni (stesso font normale, solo più marcato)
 const P_GRASSETTO_VARIAZIONE_OFF = ESC + 'E' + '\x00';
 const P_CENTRO = ESC + 'a' + '\x01';
@@ -1545,10 +1541,13 @@ function padDestraEsc(sinistra, destra, larghezza){
   return sinistra + ' '.repeat(Math.max(spazi, 1)) + destra;
 }
 // Come padDestraEsc, ma per quando la parte sinistra contiene codici di
-// formattazione (grassetto/altezza) che non occupano spazio sulla carta:
+// formattazione (grassetto/dimensione) che non occupano spazio sulla carta:
 // il conteggio dei caratteri per l'allineamento usa il testo SENZA codici.
-function padDestraEscFormattata(sinistraVisibile, sinistraConCodici, destra, larghezza){
-  const spazi = larghezza - sinistraVisibile.length - destra.length;
+// moltiplicatore: quanto spazio fisico occupa ogni carattere della parte
+// sinistra sulla carta (2 se scritta a doppia larghezza, 1 se normale).
+function padDestraEscFormattata(sinistraVisibile, sinistraConCodici, destra, larghezza, moltiplicatore){
+  moltiplicatore = moltiplicatore || 1;
+  const spazi = larghezza - (sinistraVisibile.length * moltiplicatore) - destra.length;
   return sinistraConCodici + ' '.repeat(Math.max(spazi, 1)) + destra;
 }
 
@@ -1566,7 +1565,7 @@ function escComandaCucina(ordine){
     t += P_BOLD_ON + cat.replace(/[^\x00-\x7F]/g, '') + P_BOLD_OFF + '\n';
     vociCucina.filter(v => prod(v.catId).category === cat).forEach(v => {
       const p = prod(v.catId);
-      t += ESC + '!' + '\x10' + P_BOLD_ON + sanificaPerStampa(`${v.qty} ${p.base}`) + P_BOLD_OFF + ESC + '!' + '\x00' + '\n';
+      t += P_GRANDE_ON + P_BOLD_ON + sanificaPerStampa(`${v.qty} ${p.base}`).toUpperCase() + P_BOLD_OFF + P_GRANDE_OFF + '\n';
       if(p.note) t += P_GRASSETTO_VARIAZIONE_ON + `  - ${sanificaPerStampa(p.note).toUpperCase()}\n` + P_GRASSETTO_VARIAZIONE_OFF;
       noteLineaEsc(v).forEach(g => t += P_GRASSETTO_VARIAZIONE_ON + `  - ${sanificaPerStampa(g).toUpperCase()}\n` + P_GRASSETTO_VARIAZIONE_OFF);
     });
@@ -1592,8 +1591,8 @@ function escScontrinoCliente(ordine){
       totale += prezzo * v.qty;
       const label = p.base + (p.note ? ' ' + p.note : '');
       const testoVisibile = `${v.qty} ${label}`;
-      const testoFormattato = ESC + '!' + '\x10' + P_BOLD_ON + sanificaPerStampa(testoVisibile) + P_BOLD_OFF + ESC + '!' + '\x00';
-      t += padDestraEscFormattata(testoVisibile, testoFormattato, fmtEuroEsc(prezzo * v.qty), RIGA_ESC) + '\n';
+      const testoFormattato = P_GRANDE_ON + P_BOLD_ON + sanificaPerStampa(testoVisibile).toUpperCase() + P_BOLD_OFF + P_GRANDE_OFF;
+      t += padDestraEscFormattata(testoVisibile, testoFormattato, fmtEuroEsc(prezzo * v.qty), RIGA_ESC, 2) + '\n';
       noteLineaEsc(v).forEach(g => t += P_GRASSETTO_VARIAZIONE_ON + `  ${sanificaPerStampa(g).toUpperCase()}\n` + P_GRASSETTO_VARIAZIONE_OFF);
     });
   });
