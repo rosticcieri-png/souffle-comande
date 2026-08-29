@@ -1528,10 +1528,8 @@ const ESC = '\x1B', GS = '\x1D';
 const P_INIT = ESC + '@';
 const P_BOLD_ON = ESC + 'E' + '\x01';
 const P_BOLD_OFF = ESC + 'E' + '\x00';
-const P_ALTO_ON = GS + '!' + '\x01'; // altezza doppia (solo altezza, non larghezza: le colonne restano allineate)
-const P_ALTO_OFF = GS + '!' + '\x00';
-const P_FONT_PICCOLO = ESC + 'M' + '\x01'; // font B: più piccolo e diverso da quello standard, per far notare le variazioni
-const P_FONT_NORMALE = ESC + 'M' + '\x00'; // torna al font A standard
+const P_GRASSETTO_VARIAZIONE_ON = ESC + 'E' + '\x01'; // grassetto per le variazioni (stesso font normale, solo più marcato)
+const P_GRASSETTO_VARIAZIONE_OFF = ESC + 'E' + '\x00';
 const P_CENTRO = ESC + 'a' + '\x01';
 const P_SINISTRA = ESC + 'a' + '\x00';
 const P_TAGLIO = GS + 'V' + '\x00';
@@ -1562,9 +1560,9 @@ function escComandaCucina(ordine){
     t += P_BOLD_ON + cat.replace(/[^\x00-\x7F]/g, '') + P_BOLD_OFF + '\n';
     vociCucina.filter(v => prod(v.catId).category === cat).forEach(v => {
       const p = prod(v.catId);
-      t += P_ALTO_ON + P_BOLD_ON + sanificaPerStampa(`${v.qty} ${p.base}`) + P_BOLD_OFF + P_ALTO_OFF + '\n';
-      if(p.note) t += P_FONT_PICCOLO + `  - ${sanificaPerStampa(p.note)}\n` + P_FONT_NORMALE;
-      noteLineaEsc(v).forEach(g => t += P_FONT_PICCOLO + `  - ${sanificaPerStampa(g)}\n` + P_FONT_NORMALE);
+      t += P_BOLD_ON + sanificaPerStampa(`${v.qty} ${p.base}`) + P_BOLD_OFF + '\n';
+      if(p.note) t += P_GRASSETTO_VARIAZIONE_ON + `  - ${sanificaPerStampa(p.note).toUpperCase()}\n` + P_GRASSETTO_VARIAZIONE_OFF;
+      noteLineaEsc(v).forEach(g => t += P_GRASSETTO_VARIAZIONE_ON + `  - ${sanificaPerStampa(g).toUpperCase()}\n` + P_GRASSETTO_VARIAZIONE_OFF);
     });
   });
   t += '\n\n\n' + P_TAGLIO; // spazio normale dopo, il taglio è già più in basso
@@ -1588,9 +1586,9 @@ function escScontrinoCliente(ordine){
       totale += prezzo * v.qty;
       const label = p.base + (p.note ? ' ' + p.note : '');
       const testoVisibile = `${v.qty} ${label}`;
-      const testoFormattato = P_ALTO_ON + P_BOLD_ON + sanificaPerStampa(testoVisibile) + P_BOLD_OFF + P_ALTO_OFF;
+      const testoFormattato = P_BOLD_ON + sanificaPerStampa(testoVisibile) + P_BOLD_OFF;
       t += padDestraEscFormattata(testoVisibile, testoFormattato, fmtEuroEsc(prezzo * v.qty), RIGA_ESC) + '\n';
-      noteLineaEsc(v).forEach(g => t += P_FONT_PICCOLO + `  ${sanificaPerStampa(g)}\n` + P_FONT_NORMALE);
+      noteLineaEsc(v).forEach(g => t += P_GRASSETTO_VARIAZIONE_ON + `  ${sanificaPerStampa(g).toUpperCase()}\n` + P_GRASSETTO_VARIAZIONE_OFF);
     });
   });
   t += '-'.repeat(RIGA_ESC) + '\n';
