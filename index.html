@@ -1528,7 +1528,7 @@ const ESC = '\x1B', GS = '\x1D';
 const P_INIT = ESC + '@';
 const P_BOLD_ON = ESC + 'E' + '\x01';
 const P_BOLD_OFF = ESC + 'E' + '\x00';
-const P_GRANDE_ON = GS + '!' + '\x11'; // doppia altezza + doppia larghezza (grande su entrambe le dimensioni, non "stirato")
+const P_GRANDE_ON = GS + '!' + '\x01'; // doppia altezza (larghezza normale, per non occupare troppo spazio)
 const P_GRANDE_OFF = GS + '!' + '\x00';
 const P_GRASSETTO_VARIAZIONE_ON = ESC + 'E' + '\x01'; // grassetto per le variazioni (stesso font normale, solo più marcato)
 const P_GRASSETTO_VARIAZIONE_OFF = ESC + 'E' + '\x00';
@@ -1592,7 +1592,7 @@ function escScontrinoCliente(ordine){
       const label = p.base + (p.note ? ' ' + p.note : '');
       const testoVisibile = `${v.qty} ${label}`;
       const testoFormattato = P_GRANDE_ON + P_BOLD_ON + sanificaPerStampa(testoVisibile).toUpperCase() + P_BOLD_OFF + P_GRANDE_OFF;
-      t += padDestraEscFormattata(testoVisibile, testoFormattato, fmtEuroEsc(prezzo * v.qty), RIGA_ESC, 2) + '\n';
+      t += padDestraEscFormattata(testoVisibile, testoFormattato, fmtEuroEsc(prezzo * v.qty), RIGA_ESC, 1) + '\n';
       noteLineaEsc(v).forEach(g => t += P_GRASSETTO_VARIAZIONE_ON + `  ${sanificaPerStampa(g).toUpperCase()}\n` + P_GRASSETTO_VARIAZIONE_OFF);
     });
   });
@@ -1989,7 +1989,20 @@ function dettaBreve(onStart, onRisultato, onFine){
     if(onRisultato) onRisultato(testo);
   });
   rec.addEventListener('end', () => { if(onFine) onFine(); });
-  rec.addEventListener('error', () => { if(onFine) onFine(); });
+  rec.addEventListener('error', (event) => {
+    if(onFine) onFine();
+    let messaggio = 'Non sono riuscito a capire, riprova.';
+    if(event.error === 'not-allowed' || event.error === 'service-not-allowed'){
+      messaggio = 'Il microfono non è autorizzato. Vai nelle impostazioni del browser (o di Windows) e consenti l\'accesso al microfono per questo sito.';
+    } else if(event.error === 'no-speech'){
+      messaggio = 'Non ho sentito nessuna voce. Prova a parlare più forte e più vicino al microfono del computer.';
+    } else if(event.error === 'network'){
+      messaggio = 'Il riconoscimento vocale ha bisogno di una connessione a internet, e in questo momento non riesce a collegarsi. Controlla che il computer sia connesso a internet (non solo alla stampante).';
+    } else if(event.error === 'audio-capture'){
+      messaggio = 'Non trovo nessun microfono collegato al computer.';
+    }
+    alert(messaggio);
+  });
 
   try{ rec.start(); } catch(e){ /* già in ascolto */ }
 }
