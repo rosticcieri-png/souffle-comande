@@ -100,7 +100,12 @@
   .order-scroll{
     overflow-y: auto;
     padding: 12px 14px 4px;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
+  #receiptView{ flex: 1; }
   .order-panel .send-row{
     flex-shrink: 0;
     margin: 0; padding: 8px 14px;
@@ -484,6 +489,12 @@
     display:flex; align-items:center; gap: 10px;
     margin-bottom: 12px;
   }
+  .campi-ordine-riga{
+    display:flex; gap: 14px; flex-wrap: wrap; margin-bottom: 16px;
+  }
+  .campi-ordine-riga .cliente-row{
+    flex: 1 1 220px; margin-bottom: 0;
+  }
   .tavoli-home{
     max-width: 900px; margin: 0 auto; padding: 32px 24px 12px; text-align:center;
   }
@@ -522,7 +533,7 @@
   }
   .torna-tavoli-btn{
     background: transparent; border: 1px solid var(--line); color: var(--paper);
-    padding: 8px 14px; border-radius: 8px; font-size: 14px; cursor:pointer; margin-bottom: 12px;
+    padding: 12px 22px; border-radius: 10px; font-size: 18px; font-weight:700; cursor:pointer; margin-bottom: 12px;
   }
   .torna-tavoli-btn:hover{ border-color: var(--gold); color: var(--gold); }
   .cliente-row input{
@@ -675,24 +686,6 @@
       <h2 id="orderPanelTitle">Ordine in corso</h2>
       <div class="edit-banner" id="editBanner" style="display:none;"></div>
 
-      <div class="cliente-row">
-        <input type="text" id="nomeClienteInput" placeholder="Nome cliente (facoltativo)" autocomplete="off">
-        <button id="nomeClienteMic" class="mic-btn" title="Detta il nome del cliente">🎤</button>
-      </div>
-
-      <div class="cliente-row">
-        <label for="orarioRitiroInput" class="ritiro-label">⏰ Ritiro alle</label>
-        <input type="time" id="orarioRitiroInput">
-        <button id="orarioRitiroClear" class="ritiro-clear-btn" title="Togli l'orario">✕</button>
-      </div>
-
-      <div class="cliente-row">
-        <input type="text" id="noteOrdineInput" placeholder="📝 Nota generale per l'ordine (facoltativa)" autocomplete="off">
-        <button id="noteOrdineMic" class="mic-btn" title="Detta la nota">🎤</button>
-      </div>
-
-      <div class="hint-tasti">Tocca un prodotto dal menù per aggiungerlo. Su ogni riga qui sotto puoi poi toccare ✎ per dire o scrivere una variazione (es. "senza origano", "con pepe").</div>
-
       <div class="tabs">
         <div class="tab active" data-tab="cucina">Comanda cucina</div>
         <div class="tab" data-tab="cliente">Scontrino cliente</div>
@@ -712,6 +705,24 @@
   </div>
 
   <div class="panel menu-panel">
+    <div class="campi-ordine-riga">
+      <div class="cliente-row">
+        <input type="text" id="nomeClienteInput" placeholder="Nome cliente (facoltativo)" autocomplete="off">
+        <button id="nomeClienteMic" class="mic-btn" title="Detta il nome del cliente">🎤</button>
+      </div>
+
+      <div class="cliente-row">
+        <label for="orarioRitiroInput" class="ritiro-label">⏰ Ritiro alle</label>
+        <input type="time" id="orarioRitiroInput">
+        <button id="orarioRitiroClear" class="ritiro-clear-btn" title="Togli l'orario">✕</button>
+      </div>
+
+      <div class="cliente-row">
+        <input type="text" id="noteOrdineInput" placeholder="📝 Nota generale per l'ordine (facoltativa)" autocomplete="off">
+        <button id="noteOrdineMic" class="mic-btn" title="Detta la nota">🎤</button>
+      </div>
+    </div>
+
     <h2>Menù</h2>
     <div class="menu-pagine">
       <button class="pagina-tab active" data-pagina="friggitoria">🍟 Friggitoria</button>
@@ -1749,8 +1760,7 @@ function enterEditMode(numero){
 
   const banner = document.getElementById('editBanner');
   banner.style.display = 'flex';
-  banner.innerHTML = `<span>Stai aggiungendo prodotti all'ordine N.${String(numero).padStart(3,'0')}</span><button id="spostaOrdineBtn">🔀 Sposta</button><button id="annullaModificaBtn">Annulla</button>`;
-  document.getElementById('spostaOrdineBtn').addEventListener('click', () => apriSpostaOverlay(numero));
+  banner.innerHTML = `<span>Stai aggiungendo prodotti all'ordine N.${String(numero).padStart(3,'0')}</span><button id="annullaModificaBtn">Annulla</button>`;
   document.getElementById('annullaModificaBtn').addEventListener('click', uscitaModalitaModifica);
 
   renderCurrent();
@@ -1939,6 +1949,7 @@ function renderBoard(){
           <span class="ritiro-badge">⏰ ${o.orarioRitiro}</span>
           <span class="ritiro-countdown">tra ${m < 60 ? m + ' min' : Math.floor(m/60) + 'h ' + (m%60) + 'min'}</span>
           <button class="edit-btn" data-numero="${o.numero}" title="Aggiungi prodotti">✎</button>
+          <button class="sposta-btn" data-numero="${o.numero}" title="Sposta questo conto">🔀</button>
           <button class="close-btn" data-numero="${o.numero}" title="Ordine servito">✔</button>
         </div>`;
     }).join('');
@@ -1962,6 +1973,7 @@ function renderBoard(){
         ${o.orarioRitiro ? `<span class="ritiro-badge">⏰ ${o.orarioRitiro}</span>` : ''}
         <span class="elapsed">${late ? '⚠️' : ''} ${Math.floor(minuti)}′ · ${fmtEuro(o.totale)}</span>
         <button class="edit-btn" data-numero="${o.numero}" title="Aggiungi prodotti">✎</button>
+        <button class="sposta-btn" data-numero="${o.numero}" title="Sposta questo conto">🔀</button>
         <button class="close-btn" data-numero="${o.numero}" title="Ordine servito">✔</button>
       </div>`;
   }).join('');
@@ -1972,6 +1984,9 @@ function renderBoard(){
 function collegaEventiCard(contenitore){
   contenitore.querySelectorAll('.edit-btn').forEach(btn => {
     btn.addEventListener('click', (e) => { e.stopPropagation(); enterEditMode(parseInt(btn.dataset.numero)); mostraSchermata('ordine'); });
+  });
+  contenitore.querySelectorAll('.sposta-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => { e.stopPropagation(); apriSpostaOverlay(parseInt(btn.dataset.numero)); });
   });
   contenitore.querySelectorAll('.order-card').forEach(card => {
     card.addEventListener('click', () => { enterEditMode(parseInt(card.dataset.numero)); mostraSchermata('ordine'); });
