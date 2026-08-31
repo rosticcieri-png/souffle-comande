@@ -686,6 +686,11 @@
         <button id="orarioRitiroClear" class="ritiro-clear-btn" title="Togli l'orario">✕</button>
       </div>
 
+      <div class="cliente-row">
+        <input type="text" id="noteOrdineInput" placeholder="📝 Nota generale per l'ordine (facoltativa)" autocomplete="off">
+        <button id="noteOrdineMic" class="mic-btn" title="Detta la nota">🎤</button>
+      </div>
+
       <div class="hint-tasti">Tocca un prodotto dal menù per aggiungerlo. Su ogni riga qui sotto puoi poi toccare ✎ per dire o scrivere una variazione (es. "senza origano", "con pepe").</div>
 
       <div class="tabs">
@@ -863,6 +868,7 @@ let farciscendoGusti = [];    // gusti scelti finora per quella riga (max 2)
 let nomeClienteCorrente = ''; // nome cliente per l'ordine in corso (opzionale)
 let tavoloCorrente = null; // numero del tavolo assegnato all'ordine in corso (null = asporto/nessun tavolo), indipendente dal nome cliente
 let orarioRitiroCorrente = ''; // orario di ritiro (facoltativo, formato "HH:MM"), per ordini telefonici
+let noteOrdineCorrente = ''; // nota generale per tutto l'ordine (non su un singolo prodotto)
 
 const fmtEuro = n => '€' + n.toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2});
 const fmtOra = d => d.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
@@ -891,7 +897,8 @@ function salvaStato(){
       editingOrderNumber,
       nomeClienteCorrente,
       tavoloCorrente,
-      orarioRitiroCorrente
+      orarioRitiroCorrente,
+      noteOrdineCorrente
     };
     localStorage.setItem(CHIAVE_STATO, JSON.stringify(stato));
   } catch(e){ /* memoria locale non disponibile: l'app funziona comunque, solo senza salvataggio */ }
@@ -912,6 +919,7 @@ function caricaStato(){
     nomeClienteCorrente = stato.nomeClienteCorrente || '';
     tavoloCorrente = (stato.tavoloCorrente !== undefined && stato.tavoloCorrente !== null) ? stato.tavoloCorrente : null;
     orarioRitiroCorrente = stato.orarioRitiroCorrente || '';
+    noteOrdineCorrente = stato.noteOrdineCorrente || '';
 
     // Scarta eventuali righe che fanno riferimento a prodotti non più
     // presenti nel catalogo (es. dopo un aggiornamento del menù), così
@@ -1095,6 +1103,7 @@ function htmlComandaCucina(ordine){
       ${ordine.tavolo ? `<div class="r-cliente">Tavolo ${ordine.tavolo}</div>` : ''}
       ${ordine.nomeCliente ? `<div class="r-cliente">👤 ${ordine.nomeCliente}</div>` : ''}
       ${ordine.orarioRitiro ? `<div class="r-ritiro">⏰ RITIRO ORE ${ordine.orarioRitiro}</div>` : ''}
+      ${ordine.noteOrdine ? `<div class="r-ritiro">📝 ${ordine.noteOrdine}</div>` : ''}
       <hr>
       ${categorie.map(cat => `
         <div class="r-cat">${cat}</div>
@@ -1115,6 +1124,7 @@ function htmlScontrinoCliente(ordine){
       ${ordine.tavolo ? `<div class="r-cliente">Tavolo ${ordine.tavolo}</div>` : ''}
       ${ordine.nomeCliente ? `<div class="r-cliente">👤 ${ordine.nomeCliente}</div>` : ''}
       ${ordine.orarioRitiro ? `<div class="r-ritiro">⏰ RITIRO ORE ${ordine.orarioRitiro}</div>` : ''}
+      ${ordine.noteOrdine ? `<div class="r-ritiro">📝 ${ordine.noteOrdine}</div>` : ''}
       <hr>
       ${categorie.map(cat => `
         <div class="r-cat">${cat}</div>
@@ -1143,6 +1153,7 @@ function htmlComandaCucinaEditabile(righe, numero, orario){
       ${tavoloCorrente ? `<div class="r-cliente">Tavolo ${tavoloCorrente}</div>` : ''}
       ${nomeClienteCorrente.trim() ? `<div class="r-cliente">👤 ${nomeClienteCorrente.trim()}</div>` : ''}
       ${orarioRitiroCorrente ? `<div class="r-ritiro">⏰ RITIRO ORE ${orarioRitiroCorrente}</div>` : ''}
+      ${noteOrdineCorrente.trim() ? `<div class="r-ritiro">📝 ${noteOrdineCorrente.trim()}</div>` : ''}
       <hr>
       ${categorie.map(cat => `
         <div class="r-cat">${cat}</div>
@@ -1458,13 +1469,14 @@ function finalizzaOrdine(){
       ordine.nomeCliente = nomeClienteCorrente.trim() || null;
       ordine.orarioRitiro = orarioRitiroCorrente || null;
       ordine.tavolo = tavoloCorrente || null;
+      ordine.noteOrdine = noteOrdineCorrente.trim() || null;
       ordineFinale = ordine;
     }
     annuncio = `Ordine ${ordineFinale.numero} aggiornato. Nuovo totale ${Math.round(totale)} euro.`;
     uscitaModalitaModifica();
   } else {
     orderCounter += 1;
-    ordineFinale = { numero: orderCounter, orario: new Date(), voci, totale, nomeCliente: nomeClienteCorrente.trim() || null, orarioRitiro: orarioRitiroCorrente || null, tavolo: tavoloCorrente || null };
+    ordineFinale = { numero: orderCounter, orario: new Date(), voci, totale, nomeCliente: nomeClienteCorrente.trim() || null, orarioRitiro: orarioRitiroCorrente || null, tavolo: tavoloCorrente || null, noteOrdine: noteOrdineCorrente.trim() || null };
     openOrders.unshift(ordineFinale);
     annuncio = `Ordine ${ordineFinale.numero}. Totale ${Math.round(totale)} euro.`;
   }
@@ -1473,8 +1485,10 @@ function finalizzaOrdine(){
   nomeClienteCorrente = '';
   orarioRitiroCorrente = '';
   tavoloCorrente = null;
+  noteOrdineCorrente = '';
   document.getElementById('nomeClienteInput').value = '';
   document.getElementById('orarioRitiroInput').value = '';
+  document.getElementById('noteOrdineInput').value = '';
   renderCurrent();
   renderBoard();
   registraStorico(ordineFinale);
@@ -1557,6 +1571,7 @@ function escComandaCucina(ordine){
   if(ordine.tavolo) t += 'TAVOLO ' + ordine.tavolo + '\n';
   if(ordine.nomeCliente) t += sanificaPerStampa(ordine.nomeCliente) + '\n';
   if(ordine.orarioRitiro) t += P_BOLD_ON + '*** RITIRO ORE ' + ordine.orarioRitiro + ' ***' + P_BOLD_OFF + '\n';
+  if(ordine.noteOrdine) t += P_BOLD_ON + '*** ' + sanificaPerStampa(ordine.noteOrdine).toUpperCase() + ' ***' + P_BOLD_OFF + '\n';
   t += P_BOLD_OFF + P_SINISTRA + '-'.repeat(RIGA_ESC) + '\n';
   // Le bibite non vanno in cucina: escono solo sullo scontrino cliente.
   const vociCucina = ordine.voci.filter(v => prod(v.catId).category !== '🍺 Bevande');
@@ -1580,6 +1595,7 @@ function escScontrinoCliente(ordine){
   if(ordine.tavolo) t += 'TAVOLO ' + ordine.tavolo + '\n';
   if(ordine.nomeCliente) t += sanificaPerStampa(ordine.nomeCliente) + '\n';
   if(ordine.orarioRitiro) t += P_BOLD_ON + '*** RITIRO ORE ' + ordine.orarioRitiro + ' ***' + P_BOLD_OFF + '\n';
+  if(ordine.noteOrdine) t += P_BOLD_ON + '*** ' + sanificaPerStampa(ordine.noteOrdine).toUpperCase() + ' ***' + P_BOLD_OFF + '\n';
   t += P_BOLD_OFF + P_SINISTRA + '-'.repeat(RIGA_ESC) + '\n';
   let totale = 0;
   const categorie = [...new Set(ordine.voci.map(v => prod(v.catId).category))];
@@ -1720,12 +1736,14 @@ function enterEditMode(numero){
   if(!ordine) return;
 
   editingOrderNumber = numero;
-  currentOrder = ordine.voci.map(v => ({ lineId: nextLineId++, catId: v.catId, qty: v.qty, extra: v.extra || null, prezzoManuale: (v.prezzoManuale !== undefined && v.prezzoManuale !== null) ? v.prezzoManuale : undefined }));
+  currentOrder = ordine.voci.map(v => ({ lineId: nextLineId++, catId: v.catId, qty: v.qty, extra: v.extra || null, prezzoManuale: (v.prezzoManuale !== undefined && v.prezzoManuale !== null) ? v.prezzoManuale : undefined, supplLattosio: v.supplLattosio || 0 }));
   nomeClienteCorrente = ordine.nomeCliente || '';
   document.getElementById('nomeClienteInput').value = nomeClienteCorrente;
   orarioRitiroCorrente = ordine.orarioRitiro || '';
   document.getElementById('orarioRitiroInput').value = orarioRitiroCorrente;
   tavoloCorrente = ordine.tavolo || null;
+  noteOrdineCorrente = ordine.noteOrdine || '';
+  document.getElementById('noteOrdineInput').value = noteOrdineCorrente;
 
   document.getElementById('orderPanelTitle').textContent = `Modifica ordine N.${String(numero).padStart(3,'0')}`;
 
@@ -1744,8 +1762,10 @@ function uscitaModalitaModifica(){
   nomeClienteCorrente = '';
   orarioRitiroCorrente = '';
   tavoloCorrente = null;
+  noteOrdineCorrente = '';
   document.getElementById('nomeClienteInput').value = '';
   document.getElementById('orarioRitiroInput').value = '';
+  document.getElementById('noteOrdineInput').value = '';
   document.getElementById('orderPanelTitle').textContent = 'Ordine in corso';
   document.getElementById('editBanner').style.display = 'none';
   renderCurrent();
@@ -1824,8 +1844,10 @@ document.getElementById('nuovoOrdineBtn').addEventListener('click', () => {
   nomeClienteCorrente = '';
   orarioRitiroCorrente = '';
   tavoloCorrente = null;
+  noteOrdineCorrente = '';
   document.getElementById('nomeClienteInput').value = '';
   document.getElementById('orarioRitiroInput').value = '';
+  document.getElementById('noteOrdineInput').value = '';
   document.getElementById('orderPanelTitle').textContent = 'Ordine in corso';
   document.getElementById('editBanner').style.display = 'none';
   renderCurrent();
@@ -1850,8 +1872,10 @@ function selezionaTavolo(n){
     nomeClienteCorrente = '';
     orarioRitiroCorrente = '';
     tavoloCorrente = n;
+    noteOrdineCorrente = '';
     document.getElementById('nomeClienteInput').value = '';
     document.getElementById('orarioRitiroInput').value = '';
+    document.getElementById('noteOrdineInput').value = '';
     document.getElementById('orderPanelTitle').textContent = `Tavolo ${n}`;
     document.getElementById('editBanner').style.display = 'none';
   }
@@ -2045,10 +2069,34 @@ document.getElementById('orarioRitiroClear').addEventListener('click', () => {
   salvaStato();
 });
 
+const noteOrdineInput = document.getElementById('noteOrdineInput');
+noteOrdineInput.addEventListener('input', () => {
+  noteOrdineCorrente = noteOrdineInput.value;
+  renderReceiptPreview();
+  salvaStato();
+});
+document.getElementById('noteOrdineMic').addEventListener('click', (e) => {
+  const btn = e.currentTarget;
+  dettaBreve(
+    () => { btn.classList.add('listening'); btn.textContent = '●'; },
+    (testo) => {
+      btn.classList.remove('listening'); btn.textContent = '🎤';
+      if(testo){
+        noteOrdineCorrente = testo.charAt(0).toUpperCase() + testo.slice(1);
+        noteOrdineInput.value = noteOrdineCorrente;
+        renderReceiptPreview();
+        salvaStato();
+      }
+    },
+    () => { btn.classList.remove('listening'); btn.textContent = '🎤'; }
+  );
+});
+
 // ---------------------------------------------------------------------
 caricaStato();
 nomeClienteInput.value = nomeClienteCorrente;
 orarioRitiroInput.value = orarioRitiroCorrente;
+noteOrdineInput.value = noteOrdineCorrente;
 renderMenu();
 renderCurrent();
 renderBoard();
