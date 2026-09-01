@@ -621,9 +621,9 @@
     border-radius: 8px; padding: 8px 12px; font-size: 14px; cursor:pointer;
   }
   .r-lattosio-btn.attivo{ background: #2f4a3a; border-color: #4caf7d; color: #b7f0cc; font-weight:700; }
-  .r-lattosio-reset{
-    width: 26px; height: 26px; border-radius: 8px; border: 1px solid #a8756a;
-    background: transparent; color: #a8756a; cursor:pointer; font-size: 13px;
+  .r-lattosio-meno{
+    padding: 6px 10px; border-radius: 8px; border: 1px solid #a8756a;
+    background: transparent; color: #a8756a; cursor:pointer; font-size: 14px;
   }
   .prezzo-attuale{
     text-align:center; font-size: 14px; color: #c9bda3; margin-bottom: 8px;
@@ -1245,8 +1245,8 @@ function htmlComandaCucinaEditabile(righe, numero, orario){
                 </div>
                 ${cat !== '🍺 Bevande' ? `
                 <div class="r-lattosio-controls">
+                  ${l.supplLattosio ? `<button class="r-lattosio-meno" data-lineid="${l.lineId}" title="Togli 1€">−1€</button>` : ''}
                   <button class="r-lattosio-btn ${l.supplLattosio ? 'attivo' : ''}" data-lineid="${l.lineId}">🥛 Senza lattosio${l.supplLattosio ? ` (+${l.supplLattosio}€)` : ' +1€'}</button>
-                  ${l.supplLattosio ? `<button class="r-lattosio-reset" data-lineid="${l.lineId}" title="Azzera il supplemento">✕</button>` : ''}
                 </div>` : ''}
                 <div class="r-editing-actions">
                   <button class="save-note-btn" data-lineid="${l.lineId}">✔ Salva</button>
@@ -1259,6 +1259,7 @@ function htmlComandaCucinaEditabile(righe, numero, orario){
             <div class="r-row-controls">
               <button class="r-price-tag" data-lineid="${l.lineId}" title="Tocca per correggere il prezzo">${fmtEuro(prezzoLinea(l))}</button>
               ${cat !== '🍺 Bevande' ? `
+              ${l.supplLattosio ? `<button class="r-lattosio-meno" data-lineid="${l.lineId}" title="Togli 1€">−1€</button>` : ''}
               <button class="r-lattosio-btn r-lattosio-btn-riga ${l.supplLattosio ? 'attivo' : ''}" data-lineid="${l.lineId}" title="Tocca per aggiungere 1€ di supplemento mozzarella senza lattosio">🥛${l.supplLattosio ? `+${l.supplLattosio}€` : '+1€'}</button>` : ''}
               <button class="r-edit-note" data-lineid="${l.lineId}" title="Aggiungi/modifica variazione">✎</button>
               <button class="r-step" data-lineid="${l.lineId}" data-delta="-1">−</button>
@@ -1329,12 +1330,13 @@ function collegaControlliEditabili(view){
       renderCurrent();
     });
   });
-  view.querySelectorAll('.r-lattosio-reset').forEach(btn => {
+  view.querySelectorAll('.r-lattosio-meno').forEach(btn => {
     btn.addEventListener('click', () => {
       const lineId = parseInt(btn.dataset.lineid);
       const linea = currentOrder.find(l => l.lineId === lineId);
       if(!linea) return;
-      linea.supplLattosio = 0;
+      // Toglie 1€ alla volta, per correggere se si è cliccato troppe volte per sbaglio
+      linea.supplLattosio = Math.max(0, (linea.supplLattosio || 0) - 1);
       renderCurrent();
     });
   });
