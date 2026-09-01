@@ -117,7 +117,19 @@
     border-top: 1px solid var(--line);
   }
   .panel.order-panel h2{ font-size: 16px; margin-bottom: 6px; }
-  .panel.menu-panel{ flex: 1; min-width: 0; }
+  .panel.menu-panel{ flex: 1; min-width: 0; padding: 0; }
+  .menu-fisso{
+    position: sticky;
+    top: 68px; /* stessa altezza a cui resta fisso il pannello ordine a sinistra */
+    z-index: 10;
+    background: var(--wood-light);
+    padding: 18px 18px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  @media (max-width: 900px){
+    .menu-fisso{ position: static; }
+  }
+  #menu{ padding: 0 18px 18px; }
   .panel h2{
     font-family:'Big Shoulders Display', sans-serif;
     font-weight: 700;
@@ -762,29 +774,31 @@
   </div>
 
   <div class="panel menu-panel">
-    <div class="campi-ordine-riga">
-      <div class="cliente-row campo-verde">
-        <input type="text" id="nomeClienteInput" placeholder="Nome cliente (facoltativo)" autocomplete="off">
-        <button id="nomeClienteMic" class="mic-btn" title="Detta il nome del cliente">🎤</button>
+    <div class="menu-fisso">
+      <div class="campi-ordine-riga">
+        <div class="cliente-row campo-verde">
+          <input type="text" id="nomeClienteInput" placeholder="Nome cliente (facoltativo)" autocomplete="off">
+          <button id="nomeClienteMic" class="mic-btn" title="Detta il nome del cliente">🎤</button>
+        </div>
+
+        <div class="cliente-row campo-giallo">
+          <label for="orarioRitiroInput" class="ritiro-label">⏰ Ritiro alle</label>
+          <input type="time" id="orarioRitiroInput">
+          <button id="orarioRitiroClear" class="ritiro-clear-btn" title="Togli l'orario">✕</button>
+        </div>
+
+        <div class="cliente-row campo-bianco">
+          <input type="text" id="noteOrdineInput" placeholder="📝 Nota generale per l'ordine (facoltativa)" autocomplete="off">
+          <button id="noteOrdineMic" class="mic-btn" title="Detta la nota">🎤</button>
+        </div>
       </div>
 
-      <div class="cliente-row campo-giallo">
-        <label for="orarioRitiroInput" class="ritiro-label">⏰ Ritiro alle</label>
-        <input type="time" id="orarioRitiroInput">
-        <button id="orarioRitiroClear" class="ritiro-clear-btn" title="Togli l'orario">✕</button>
+      <div class="menu-pagine">
+        <button class="pagina-tab active" data-pagina="friggitoria">🍟 Friggitoria</button>
+        <button class="pagina-tab" data-pagina="bibite">🍺 Bibite</button>
+        <button class="pagina-tab" data-pagina="pizze">🍕 Pizze</button>
+        <button class="pagina-tab" data-pagina="saltimbocca">🥙 Saltimbocca</button>
       </div>
-
-      <div class="cliente-row campo-bianco">
-        <input type="text" id="noteOrdineInput" placeholder="📝 Nota generale per l'ordine (facoltativa)" autocomplete="off">
-        <button id="noteOrdineMic" class="mic-btn" title="Detta la nota">🎤</button>
-      </div>
-    </div>
-
-    <div class="menu-pagine">
-      <button class="pagina-tab active" data-pagina="friggitoria">🍟 Friggitoria</button>
-      <button class="pagina-tab" data-pagina="bibite">🍺 Bibite</button>
-      <button class="pagina-tab" data-pagina="pizze">🍕 Pizze</button>
-      <button class="pagina-tab" data-pagina="saltimbocca">🥙 Saltimbocca</button>
     </div>
     <div id="menu"></div>
   </div>
