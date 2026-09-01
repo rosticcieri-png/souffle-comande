@@ -99,13 +99,17 @@
   }
   .order-scroll{
     overflow-y: auto;
-    padding: 12px 14px 4px;
+    padding: 0 14px 4px;
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
   }
   #receiptView{ flex: 1; }
+  .order-fisso{
+    flex-shrink: 0;
+    padding: 18px 14px 0;
+  }
   .order-panel .send-row{
     flex-shrink: 0;
     margin: 0; padding: 8px 14px;
@@ -312,18 +316,18 @@
   .receipt .r-row{ display:flex; flex-wrap:wrap; align-items:center; gap: 4px 10px; padding: 6px 0; }
   .receipt .r-row-controls{ display:flex; align-items:center; gap: 6px; flex-shrink:0; flex-basis:100%; justify-content:flex-start; }
   .receipt button.r-step{
-    width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--ink-soft);
+    padding: 6px 10px; border-radius: 8px; border: 1px solid var(--ink-soft);
     background: transparent; color: var(--ink); cursor:pointer; font-size: 14px; line-height:1;
   }
   .receipt .r-qty{ font-family:'IBM Plex Mono', monospace; min-width:16px; text-align:center; color: var(--ink); }
   .receipt button.r-price-tag{
     border: 1px solid var(--ink-soft); background: transparent; color: var(--ink);
-    border-radius: 6px; padding: 3px 7px; font-size: 12px; cursor:pointer;
+    border-radius: 8px; padding: 6px 10px; font-size: 15px; font-weight:700; cursor:pointer;
     font-family:'IBM Plex Mono', monospace;
   }
   .receipt button.r-edit-note, .receipt button.r-remove-line{
-    width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--ink-soft);
-    background: transparent; color: var(--ink); cursor:pointer; font-size: 13px; line-height:1;
+    padding: 6px 10px; border-radius: 8px; border: 1px solid var(--ink-soft);
+    background: transparent; color: var(--ink); cursor:pointer; font-size: 14px; line-height:1;
   }
   .receipt button.r-remove-line{ color:#a8756a; border-color:#a8756a; }
   .receipt .r-editing-row{ padding: 8px 0; border-top: 1px dashed var(--ink-soft); border-bottom: 1px dashed var(--ink-soft); }
@@ -532,20 +536,27 @@
     text-transform: uppercase; letter-spacing: 0.5px; margin: 0 14px 0 0; flex-shrink:0;
   }
   .torna-tavoli-btn{
-    background: transparent; border: 1px solid var(--line); color: var(--paper);
+    background: var(--basil); border: 1px solid var(--basil); color: var(--paper);
     padding: 12px 22px; border-radius: 10px; font-size: 18px; font-weight:700; cursor:pointer; margin-bottom: 12px;
   }
-  .torna-tavoli-btn:hover{ border-color: var(--gold); color: var(--gold); }
+  .torna-tavoli-btn:hover{ background: #6a8461; }
   .cliente-row input{
     flex: 1;
-    padding: 9px 12px;
+    padding: 14px 14px;
     border-radius: 8px;
     border: 1px solid var(--line);
     background: var(--wood-lighter);
     color: var(--paper);
-    font-size: 15px;
+    font-size: 16px;
     font-family: 'Inter', sans-serif;
   }
+  .campo-verde{ background: #2f4a3a; border: 1px solid #4caf7d; border-radius: 10px; padding: 6px 10px; }
+  .campo-verde input, .campo-verde .ritiro-label{ background: transparent; border-color: transparent; color: #d8f5e3; }
+  .campo-giallo{ background: #4a4222; border: 1px solid #d4b83a; border-radius: 10px; padding: 6px 10px; }
+  .campo-giallo input, .campo-giallo .ritiro-label{ background: transparent; border-color: transparent; color: #f5eac8; }
+  .campo-bianco{ background: #eae3d3; border: 1px solid #cfc4a8; border-radius: 10px; padding: 6px 10px; }
+  .campo-bianco input, .campo-bianco .ritiro-label{ background: transparent; border-color: transparent; color: #2a2118; }
+  .campo-bianco input::placeholder{ color: #6b6152; }
   .cliente-row input::placeholder{ color: #8a7c65; }
   .ritiro-label{ font-size: 15px; color: var(--paper); white-space: nowrap; }
   .cliente-row input[type="time"]{
@@ -610,7 +621,26 @@
     border-radius: 8px; padding: 8px 12px; font-size: 14px; cursor:pointer;
   }
   .r-lattosio-btn.attivo{ background: #2f4a3a; border-color: #4caf7d; color: #b7f0cc; font-weight:700; }
-  .r-lattosio-btn-riga{ padding: 6px 8px; font-size: 13px; }
+  .r-lattosio-reset{
+    width: 26px; height: 26px; border-radius: 8px; border: 1px solid #a8756a;
+    background: transparent; color: #a8756a; cursor:pointer; font-size: 13px;
+  }
+  .prezzo-attuale{
+    text-align:center; font-size: 14px; color: #c9bda3; margin-bottom: 8px;
+  }
+  .prezzo-display{
+    text-align:center; font-family:'IBM Plex Mono', monospace; font-size: 36px; font-weight:700;
+    color: var(--gold); background: var(--wood-lighter); border-radius: 10px; padding: 16px; margin-bottom: 16px;
+  }
+  .prezzo-tastierino{ display:grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .prezzo-tasto{
+    background: var(--wood-lighter); border: 1px solid var(--line); color: var(--paper);
+    border-radius: 10px; padding: 18px 0; font-size: 22px; font-weight:700; cursor:pointer;
+  }
+  .prezzo-tasto:hover{ background: #5a4732; }
+  .prezzo-tasto-canc{ background: #4a2c22; border-color:#a8756a; }
+  .prezzo-tasto-conferma{ background: var(--basil); border-color: var(--basil); }
+  .r-lattosio-btn-riga{ padding: 6px 10px; font-size: 14px; }
 
   @media (prefers-reduced-motion: reduce){
     .mic-btn.listening{ animation: none; }
@@ -678,10 +708,35 @@
   </div>
 </div>
 
+<div id="prezzoOverlay" class="resoconto-overlay" style="display:none;">
+  <div class="resoconto-box" style="width:min(360px, 92vw);">
+    <div class="resoconto-head">
+      <h2>✎ Correggi il prezzo</h2>
+      <button id="chiudiPrezzo" class="resoconto-close">✕</button>
+    </div>
+    <div class="prezzo-attuale" id="prezzoAttuale">Prezzo in comanda: €0,00</div>
+    <div class="prezzo-display" id="prezzoDisplay">€0,00</div>
+    <div class="prezzo-tastierino">
+      <button class="prezzo-tasto" data-cifra="1">1</button>
+      <button class="prezzo-tasto" data-cifra="2">2</button>
+      <button class="prezzo-tasto" data-cifra="3">3</button>
+      <button class="prezzo-tasto" data-cifra="4">4</button>
+      <button class="prezzo-tasto" data-cifra="5">5</button>
+      <button class="prezzo-tasto" data-cifra="6">6</button>
+      <button class="prezzo-tasto" data-cifra="7">7</button>
+      <button class="prezzo-tasto" data-cifra="8">8</button>
+      <button class="prezzo-tasto" data-cifra="9">9</button>
+      <button class="prezzo-tasto prezzo-tasto-canc" id="prezzoCancella">⌫</button>
+      <button class="prezzo-tasto" data-cifra="0">0</button>
+      <button class="prezzo-tasto prezzo-tasto-conferma" id="prezzoConferma">✔</button>
+    </div>
+  </div>
+</div>
+
 <div id="schermataOrdine" style="display:none;">
 <main>
   <div class="panel order-panel">
-    <div class="order-scroll">
+    <div class="order-fisso">
       <button id="tornaTavoliBtn" class="torna-tavoli-btn">◀ Tavoli</button>
       <h2 id="orderPanelTitle">Ordine in corso</h2>
       <div class="edit-banner" id="editBanner" style="display:none;"></div>
@@ -690,6 +745,8 @@
         <div class="tab active" data-tab="cucina">Comanda cucina</div>
         <div class="tab" data-tab="cliente">Scontrino cliente</div>
       </div>
+    </div>
+    <div class="order-scroll">
       <div id="receiptView"></div>
     </div>
 
@@ -706,24 +763,23 @@
 
   <div class="panel menu-panel">
     <div class="campi-ordine-riga">
-      <div class="cliente-row">
+      <div class="cliente-row campo-verde">
         <input type="text" id="nomeClienteInput" placeholder="Nome cliente (facoltativo)" autocomplete="off">
         <button id="nomeClienteMic" class="mic-btn" title="Detta il nome del cliente">🎤</button>
       </div>
 
-      <div class="cliente-row">
+      <div class="cliente-row campo-giallo">
         <label for="orarioRitiroInput" class="ritiro-label">⏰ Ritiro alle</label>
         <input type="time" id="orarioRitiroInput">
         <button id="orarioRitiroClear" class="ritiro-clear-btn" title="Togli l'orario">✕</button>
       </div>
 
-      <div class="cliente-row">
+      <div class="cliente-row campo-bianco">
         <input type="text" id="noteOrdineInput" placeholder="📝 Nota generale per l'ordine (facoltativa)" autocomplete="off">
         <button id="noteOrdineMic" class="mic-btn" title="Detta la nota">🎤</button>
       </div>
     </div>
 
-    <h2>Menù</h2>
     <div class="menu-pagine">
       <button class="pagina-tab active" data-pagina="friggitoria">🍟 Friggitoria</button>
       <button class="pagina-tab" data-pagina="bibite">🍺 Bibite</button>
@@ -777,6 +833,7 @@ const CATALOGO = [
   // 📏 METRO E MIGNON
   { id:'metro_margherita', base:'Mezzo Metro Margherita', price:12.00, category:'📏 Metro e mignon', voice:['metro margherita','mezzo metro margherita'] },
   { id:'metro_farcito', base:'Mezzo Metro Farcito', price:14.00, category:'📏 Metro e mignon', voice:['metro farcito','mezzo metro farcito'], scegliGusti:2 },
+  { id:'metro_farcito_4gusti', base:'Mezzo Metro Farcito 4 gusti', price:14.00, category:'📏 Metro e mignon', voice:['metro farcito quattro gusti','mezzo metro farcito 4 gusti'], scegliGusti:4 },
   { id:'portafoglio', base:'Pizza a portafoglio', price:3.50, category:'📏 Metro e mignon', voice:['portafoglio'] },
   { id:'mignon_margherita', base:'Mignon Margherita', price:2.00, category:'📏 Metro e mignon', voice:['mignon margherita'] },
   { id:'mignon_farcita', base:'Mignon Farcita', price:2.50, category:'📏 Metro e mignon', voice:['mignon farcita'] },
@@ -875,7 +932,8 @@ let activeTab = 'cucina';
 let editingOrderNumber = null; // null = nuovo ordine, altrimenti numero dell'ordine in modifica
 let editandoLineId = null; // lineId della riga di cui si sta scrivendo/dettando la variazione
 let farciscendoLineId = null; // lineId di un Mezzo Metro Farcito in attesa che si scelgano i gusti
-let farciscendoGusti = [];    // gusti scelti finora per quella riga (max 2)
+let farciscendoGusti = [];    // gusti scelti finora per quella riga
+let farciscendoMax = 2;       // quanti gusti al massimo per questo prodotto (2 o 4)
 let nomeClienteCorrente = ''; // nome cliente per l'ordine in corso (opzionale)
 let tavoloCorrente = null; // numero del tavolo assegnato all'ordine in corso (null = asporto/nessun tavolo), indipendente dal nome cliente
 let orarioRitiroCorrente = ''; // orario di ritiro (facoltativo, formato "HH:MM"), per ordini telefonici
@@ -998,7 +1056,7 @@ function renderMenu(){
         farciscendoGusti.push(p.base);
         const linea = currentOrder.find(l => l.lineId === farciscendoLineId);
         if(linea) linea.extra = farciscendoGusti.join('\n');
-        if(farciscendoGusti.length >= 2) terminaScelteGusti();
+        if(farciscendoGusti.length >= farciscendoMax) terminaScelteGusti();
         renderCurrent();
         return;
       }
@@ -1019,6 +1077,7 @@ function renderMenu(){
 function iniziaSceltaGusti(lineId, quantiGusti, nomeProdotto){
   farciscendoLineId = lineId;
   farciscendoGusti = [];
+  farciscendoMax = quantiGusti;
   const banner = document.getElementById('editBanner');
   banner.style.display = 'flex';
   banner.innerHTML = `<span>Tocca fino a ${quantiGusti} pizze (dalla pagina Pizze) per scegliere i gusti di "${nomeProdotto}"</span><button id="fineSceltaGustiBtn">Fatto</button>`;
@@ -1079,6 +1138,13 @@ function noteLineaEsc(l){
   if(l.supplLattosio) note.push(`Mozzarella senza lattosio (+${fmtEuroEsc(l.supplLattosio)})`);
   return note;
 }
+// Come sopra ma senza il prezzo: per la comanda cucina, dove il prezzo del
+// supplemento non serve (lo vede solo il cliente sullo scontrino).
+function noteLineaCucina(l){
+  const note = righeExtra(l.extra);
+  if(l.supplLattosio) note.push('Mozzarella senza lattosio');
+  return note;
+}
 
 function currentTotal(){
   return currentOrder.reduce((sum, l) => sum + prezzoLinea(l) * l.qty, 0);
@@ -1120,7 +1186,7 @@ function htmlComandaCucina(ordine){
         <div class="r-cat">${cat}</div>
         ${vociCucina.filter(v => prod(v.catId).category === cat).map(v => {
           const p = prod(v.catId);
-          return `<div class="r-row"><span>${v.qty} ${p.base}</span></div>${p.note ? `<div class="r-note">- ${p.note}</div>` : ''}${noteLinea(v).map(g => `<div class="r-note">- ${g}</div>`).join('')}`;
+          return `<div class="r-row"><span>${v.qty} ${p.base}</span></div>${p.note ? `<div class="r-note">- ${p.note}</div>` : ''}${noteLineaCucina(v).map(g => `<div class="r-note">- ${g}</div>`).join('')}`;
         }).join('')}
       `).join('')}
     </div>`;
@@ -1179,8 +1245,8 @@ function htmlComandaCucinaEditabile(righe, numero, orario){
                 </div>
                 ${cat !== '🍺 Bevande' ? `
                 <div class="r-lattosio-controls">
-                  <button class="r-lattosio-btn ${l.supplLattosio === 1 ? 'attivo' : ''}" data-lineid="${l.lineId}" data-valore="1">🥛 Senza lattosio +1€</button>
-                  <button class="r-lattosio-btn ${l.supplLattosio === 2 ? 'attivo' : ''}" data-lineid="${l.lineId}" data-valore="2">🥛 Senza lattosio +2€</button>
+                  <button class="r-lattosio-btn ${l.supplLattosio ? 'attivo' : ''}" data-lineid="${l.lineId}">🥛 Senza lattosio${l.supplLattosio ? ` (+${l.supplLattosio}€)` : ' +1€'}</button>
+                  ${l.supplLattosio ? `<button class="r-lattosio-reset" data-lineid="${l.lineId}" title="Azzera il supplemento">✕</button>` : ''}
                 </div>` : ''}
                 <div class="r-editing-actions">
                   <button class="save-note-btn" data-lineid="${l.lineId}">✔ Salva</button>
@@ -1193,8 +1259,7 @@ function htmlComandaCucinaEditabile(righe, numero, orario){
             <div class="r-row-controls">
               <button class="r-price-tag" data-lineid="${l.lineId}" title="Tocca per correggere il prezzo">${fmtEuro(prezzoLinea(l))}</button>
               ${cat !== '🍺 Bevande' ? `
-              <button class="r-lattosio-btn r-lattosio-btn-riga ${l.supplLattosio === 1 ? 'attivo' : ''}" data-lineid="${l.lineId}" data-valore="1" title="Mozzarella senza lattosio +1€">🥛+1€</button>
-              <button class="r-lattosio-btn r-lattosio-btn-riga ${l.supplLattosio === 2 ? 'attivo' : ''}" data-lineid="${l.lineId}" data-valore="2" title="Mozzarella senza lattosio +2€">🥛+2€</button>` : ''}
+              <button class="r-lattosio-btn r-lattosio-btn-riga ${l.supplLattosio ? 'attivo' : ''}" data-lineid="${l.lineId}" title="Tocca per aggiungere 1€ di supplemento mozzarella senza lattosio">🥛${l.supplLattosio ? `+${l.supplLattosio}€` : '+1€'}</button>` : ''}
               <button class="r-edit-note" data-lineid="${l.lineId}" title="Aggiungi/modifica variazione">✎</button>
               <button class="r-step" data-lineid="${l.lineId}" data-delta="-1">−</button>
               <span class="r-qty">${l.qty}</span>
@@ -1229,20 +1294,7 @@ function collegaControlliEditabili(view){
   });
   view.querySelectorAll('.r-price-tag').forEach(btn => {
     btn.addEventListener('click', () => {
-      const lineId = parseInt(btn.dataset.lineid);
-      const linea = currentOrder.find(l => l.lineId === lineId);
-      if(!linea) return;
-      const attuale = prezzoLinea(linea);
-      const risposta = prompt('Prezzo per questa voce (€):', attuale.toFixed(2).replace('.', ','));
-      if(risposta === null) return;
-      const pulito = risposta.trim().replace(',', '.');
-      if(pulito === ''){
-        delete linea.prezzoManuale;
-      } else {
-        const valore = parseFloat(pulito);
-        if(!isNaN(valore) && valore >= 0) linea.prezzoManuale = valore;
-      }
-      renderCurrent();
+      apriPrezzoOverlay(parseInt(btn.dataset.lineid));
     });
   });
   view.querySelectorAll('.r-edit-note').forEach(btn => {
@@ -1270,11 +1322,19 @@ function collegaControlliEditabili(view){
   view.querySelectorAll('.r-lattosio-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const lineId = parseInt(btn.dataset.lineid);
-      const valore = parseInt(btn.dataset.valore);
       const linea = currentOrder.find(l => l.lineId === lineId);
       if(!linea) return;
-      // Tocco di nuovo lo stesso valore -> lo tolgo (toggle)
-      linea.supplLattosio = (linea.supplLattosio === valore) ? 0 : valore;
+      // Ogni tocco aggiunge 1€ in più al supplemento (1°, 2°, 3° tocco = +1€, +2€, +3€...)
+      linea.supplLattosio = (linea.supplLattosio || 0) + 1;
+      renderCurrent();
+    });
+  });
+  view.querySelectorAll('.r-lattosio-reset').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lineId = parseInt(btn.dataset.lineid);
+      const linea = currentOrder.find(l => l.lineId === lineId);
+      if(!linea) return;
+      linea.supplLattosio = 0;
       renderCurrent();
     });
   });
@@ -1593,7 +1653,7 @@ function escComandaCucina(ordine){
       const p = prod(v.catId);
       t += P_GRANDE_ON + P_BOLD_ON + sanificaPerStampa(`${v.qty} ${p.base}`).toUpperCase() + P_BOLD_OFF + P_GRANDE_OFF + '\n';
       if(p.note) t += P_GRASSETTO_VARIAZIONE_ON + `  - ${sanificaPerStampa(p.note).toUpperCase()}\n` + P_GRASSETTO_VARIAZIONE_OFF;
-      noteLineaEsc(v).forEach(g => t += P_GRASSETTO_VARIAZIONE_ON + `  - ${sanificaPerStampa(g).toUpperCase()}\n` + P_GRASSETTO_VARIAZIONE_OFF);
+      noteLineaCucina(v).forEach(g => t += P_GRASSETTO_VARIAZIONE_ON + `  - ${sanificaPerStampa(g).toUpperCase()}\n` + P_GRASSETTO_VARIAZIONE_OFF);
     });
   });
   t += '\n\n\n' + P_TAGLIO; // spazio normale dopo, il taglio è già più in basso
@@ -1784,6 +1844,56 @@ function uscitaModalitaModifica(){
 // ---------------------------------------------------------------------
 // SPOSTA UN CONTO da un tavolo all'altro, o da/verso l'asporto
 // ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
+// TASTIERINO PER CORREGGERE IL PREZZO — inserimento a cifre (in centesimi,
+// come una cassa), così non serve digitare la virgola dei decimali.
+// ---------------------------------------------------------------------
+let prezzoLineIdCorrente = null;
+let prezzoCentesimiCorrente = '';
+
+function apriPrezzoOverlay(lineId){
+  const linea = currentOrder.find(l => l.lineId === lineId);
+  if(!linea) return;
+  prezzoLineIdCorrente = lineId;
+  prezzoCentesimiCorrente = ''; // parte sempre da zero, così le cifre digitate sostituiscono il prezzo (non si sommano)
+  document.getElementById('prezzoAttuale').textContent = 'Prezzo in comanda: ' + fmtEuro(prezzoLinea(linea));
+  aggiornaPrezzoDisplay();
+  document.getElementById('prezzoOverlay').style.display = 'flex';
+}
+
+function aggiornaPrezzoDisplay(){
+  const centesimi = parseInt(prezzoCentesimiCorrente || '0');
+  document.getElementById('prezzoDisplay').textContent = fmtEuro(centesimi / 100);
+}
+
+document.querySelectorAll('.prezzo-tasto[data-cifra]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    // Tolgo eventuali zeri iniziali superflui, max 5 cifre (999,99€)
+    let nuovo = (prezzoCentesimiCorrente + btn.dataset.cifra).replace(/^0+(?=\d)/, '');
+    if(nuovo.length > 5) return;
+    prezzoCentesimiCorrente = nuovo;
+    aggiornaPrezzoDisplay();
+  });
+});
+document.getElementById('prezzoCancella').addEventListener('click', () => {
+  prezzoCentesimiCorrente = prezzoCentesimiCorrente.slice(0, -1);
+  aggiornaPrezzoDisplay();
+});
+document.getElementById('prezzoConferma').addEventListener('click', () => {
+  const linea = currentOrder.find(l => l.lineId === prezzoLineIdCorrente);
+  if(linea){
+    linea.prezzoManuale = parseInt(prezzoCentesimiCorrente || '0') / 100;
+    renderCurrent();
+  }
+  document.getElementById('prezzoOverlay').style.display = 'none';
+});
+document.getElementById('chiudiPrezzo').addEventListener('click', () => {
+  document.getElementById('prezzoOverlay').style.display = 'none';
+});
+document.getElementById('prezzoOverlay').addEventListener('click', (e) => {
+  if(e.target.id === 'prezzoOverlay') document.getElementById('prezzoOverlay').style.display = 'none';
+});
+
 function apriSpostaOverlay(numero){
   const ordine = openOrders.find(o => o.numero === numero);
   if(!ordine) return;
