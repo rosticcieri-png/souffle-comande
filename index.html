@@ -71,7 +71,7 @@
     flex-direction: row;
     align-items: flex-start;
     gap: 18px;
-    padding: 14px 28px 10px;
+    padding: 6px 28px 10px;
   }
   @media (max-width: 900px){
     main{ flex-direction: column; }
@@ -117,19 +117,32 @@
     border-top: 1px solid var(--line);
   }
   .panel.order-panel h2{ font-size: 16px; margin-bottom: 6px; }
-  .panel.menu-panel{ flex: 1; min-width: 0; padding: 0; }
-  .menu-fisso{
+  .panel.menu-panel{
+    flex: 1;
+    min-width: 0;
+    padding: 0;
     position: sticky;
-    top: 68px; /* stessa altezza a cui resta fisso il pannello ordine a sinistra */
-    z-index: 10;
+    top: 68px;
+    max-height: calc(100vh - 80px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* lo scroll avviene dentro .menu-scroll, i campi e le pagine restano fissi */
+  }
+  @media (max-width: 900px){
+    .panel.menu-panel{ position: static; max-height: none; }
+  }
+  .menu-fisso{
+    flex-shrink: 0;
     background: var(--wood-light);
     padding: 8px 18px 8px;
     border-bottom: 1px solid var(--line);
   }
-  @media (max-width: 900px){
-    .menu-fisso{ position: static; }
+  .menu-scroll{
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
   }
-  #menu{ padding: 0 18px 18px; }
+  #menu{ padding: 8px 18px 18px; }
   .panel h2{
     font-family:'Big Shoulders Display', sans-serif;
     font-weight: 700;
@@ -800,7 +813,9 @@
         <button class="pagina-tab" data-pagina="saltimbocca">🥙 Saltimbocca</button>
       </div>
     </div>
-    <div id="menu"></div>
+    <div class="menu-scroll">
+      <div id="menu"></div>
+    </div>
   </div>
 </main>
 </div>
