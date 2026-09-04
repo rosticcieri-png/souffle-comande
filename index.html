@@ -1784,8 +1784,14 @@ async function stampaOrdine(tipo, ordine){
       // fine, così la stampante non resta mai occupata tra un ordine e l'altro.
       await qz.usb.claimDevice(STAMPANTE_USB_VENDOR, STAMPANTE_USB_PRODUCT, _usbInterfaccia);
       try{
-        if(stampaCucina) await stampaViaQZ(escComandaCucina(ordine));
-        if(stampaCliente) await stampaViaQZ(escScontrinoCliente(ordine));
+        // Concateniamo comanda + scontrino in un SOLO invio alla stampante
+        // (invece di due) così QZ Tray chiede l'autorizzazione una volta
+        // sola invece di due: la carta viene comunque tagliata tra i due,
+        // perché ogni comanda/scontrino finisce già con il comando di taglio.
+        let testoCompleto = '';
+        if(stampaCucina) testoCompleto += escComandaCucina(ordine);
+        if(stampaCliente) testoCompleto += escScontrinoCliente(ordine);
+        if(testoCompleto) await stampaViaQZ(testoCompleto);
       } finally {
         await qz.usb.releaseDevice(STAMPANTE_USB_VENDOR, STAMPANTE_USB_PRODUCT).catch(()=>{});
       }
