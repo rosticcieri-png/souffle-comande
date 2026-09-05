@@ -156,6 +156,14 @@
   .cat-block + .cat-block{ margin-top: 16px; }
 
   .menu-pagine{ display:flex; gap:8px; margin-bottom:0; flex-wrap:wrap; }
+  .quantita-riga{ display:flex; align-items:center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  .quantita-label{ font-size: 14px; color: #c9bda3; flex-shrink:0; }
+  .quantita-tasti{ display:flex; gap: 6px; flex-wrap: wrap; }
+  .quantita-tasto{
+    width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--wood-lighter); color: var(--paper); font-size: 15px; font-weight:700; cursor:pointer;
+  }
+  .quantita-tasto.active{ background: var(--gold); border-color: var(--gold); color: var(--ink); }
   .pagina-tab{
     padding: 10px 18px; border-radius: 8px; border: 1px solid var(--line);
     background: var(--wood-lighter); color: var(--paper); cursor:pointer;
@@ -837,6 +845,20 @@
         <button class="pagina-tab" data-pagina="pizze">🍕 Pizze</button>
         <button class="pagina-tab" data-pagina="saltimbocca">🥙 Saltimbocca</button>
       </div>
+
+      <div class="quantita-riga">
+        <span class="quantita-label">Quantità da aggiungere:</span>
+        <div class="quantita-tasti" id="quantitaTasti">
+          <button class="quantita-tasto active" data-qty="1">1</button>
+          <button class="quantita-tasto" data-qty="2">2</button>
+          <button class="quantita-tasto" data-qty="3">3</button>
+          <button class="quantita-tasto" data-qty="4">4</button>
+          <button class="quantita-tasto" data-qty="5">5</button>
+          <button class="quantita-tasto" data-qty="6">6</button>
+          <button class="quantita-tasto" data-qty="8">8</button>
+          <button class="quantita-tasto" data-qty="10">10</button>
+        </div>
+      </div>
     </div>
     <div class="menu-scroll">
       <div id="menu"></div>
@@ -992,6 +1014,11 @@ let nomeClienteCorrente = ''; // nome cliente per l'ordine in corso (opzionale)
 let tavoloCorrente = null; // numero del tavolo assegnato all'ordine in corso (null = asporto/nessun tavolo), indipendente dal nome cliente
 let orarioRitiroCorrente = ''; // orario di ritiro (facoltativo, formato "HH:MM"), per ordini telefonici
 let noteOrdineCorrente = ''; // nota generale per tutto l'ordine (non su un singolo prodotto)
+let quantitaSelezionata = 1; // quantità che verrà aggiunta al prossimo prodotto toccato (resta finché non la cambi)
+function resettaQuantitaSelezionata(){
+  quantitaSelezionata = 1;
+  document.querySelectorAll('.quantita-tasto').forEach(t => t.classList.toggle('active', t.dataset.qty === '1'));
+}
 
 const fmtEuro = n => '€' + n.toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2});
 const fmtOra = d => d.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
@@ -1115,7 +1142,7 @@ function renderMenu(){
         return;
       }
 
-      aggiungiRiga(btn.dataset.id, 1, null);
+      aggiungiRiga(btn.dataset.id, quantitaSelezionata, null);
       renderCurrent();
 
       // Se il prodotto appena aggiunto richiede la scelta dei gusti (es.
@@ -1459,6 +1486,14 @@ document.querySelectorAll('.pagina-tab').forEach(tab => {
   });
 });
 
+document.querySelectorAll('.quantita-tasto').forEach(tasto => {
+  tasto.addEventListener('click', () => {
+    document.querySelectorAll('.quantita-tasto').forEach(t => t.classList.remove('active'));
+    tasto.classList.add('active');
+    quantitaSelezionata = parseInt(tasto.dataset.qty);
+  });
+});
+
 // ---------------------------------------------------------------------
 // INVIO ORDINE / AGGIORNAMENTO ORDINE ESISTENTE + ANNUNCIO VOCALE + STAMPA
 // ---------------------------------------------------------------------
@@ -1691,6 +1726,7 @@ function finalizzaOrdine(){
   orarioRitiroCorrente = '';
   tavoloCorrente = null;
   noteOrdineCorrente = '';
+  resettaQuantitaSelezionata();
   document.getElementById('nomeClienteInput').value = '';
   document.getElementById('orarioRitiroInput').value = '';
   document.getElementById('noteOrdineInput').value = '';
@@ -1973,6 +2009,7 @@ function uscitaModalitaModifica(){
   orarioRitiroCorrente = '';
   tavoloCorrente = null;
   noteOrdineCorrente = '';
+  resettaQuantitaSelezionata();
   document.getElementById('nomeClienteInput').value = '';
   document.getElementById('orarioRitiroInput').value = '';
   document.getElementById('noteOrdineInput').value = '';
@@ -2105,6 +2142,7 @@ document.getElementById('nuovoOrdineBtn').addEventListener('click', () => {
   orarioRitiroCorrente = '';
   tavoloCorrente = null;
   noteOrdineCorrente = '';
+  resettaQuantitaSelezionata();
   document.getElementById('nomeClienteInput').value = '';
   document.getElementById('orarioRitiroInput').value = '';
   document.getElementById('noteOrdineInput').value = '';
@@ -2133,6 +2171,7 @@ function selezionaTavolo(n){
     orarioRitiroCorrente = '';
     tavoloCorrente = n;
     noteOrdineCorrente = '';
+    resettaQuantitaSelezionata();
     document.getElementById('nomeClienteInput').value = '';
     document.getElementById('orarioRitiroInput').value = '';
     document.getElementById('noteOrdineInput').value = '';
