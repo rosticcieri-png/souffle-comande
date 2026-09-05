@@ -449,6 +449,30 @@
     display:flex; justify-content:space-between; margin-top: 14px; padding-top: 14px;
     border-top: 2px solid var(--gold); font-size: 19px; font-weight: 700; color: var(--gold);
   }
+  .archivio-selettore{
+    display:flex; align-items:center; gap: 10px; margin-bottom: 10px;
+  }
+  .archivio-selettore input[type="date"]{
+    flex:1; padding: 10px 12px; border-radius: 8px; border:1px solid var(--line);
+    background: var(--wood-lighter); color: var(--paper); font-size: 15px;
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .archivio-freccia{
+    width: 40px; height: 40px; border-radius: 8px; border:1px solid var(--line);
+    background: var(--wood-lighter); color: var(--paper); font-size: 16px; cursor:pointer;
+  }
+  .archivio-data-titolo{
+    text-align:center; color: var(--gold); font-weight:700; text-transform: capitalize;
+    margin-bottom: 14px; font-size: 15px;
+  }
+  .archivio-ordine{
+    background: var(--wood-lighter); border:1px solid var(--line); border-radius: 10px;
+    padding: 12px 14px; margin-bottom: 10px;
+  }
+  .archivio-ordine-riga1{ display:flex; justify-content:space-between; margin-bottom: 6px; }
+  .archivio-numero{ font-weight:700; color: var(--gold); font-family:'IBM Plex Mono', monospace; }
+  .archivio-totale{ font-weight:700; color: var(--paper); }
+  .archivio-ordine-prodotti{ font-size: 14px; color:#c9bda3; line-height:1.5; }
   .sposta-lista{ display:flex; flex-direction:column; gap:10px; }
   .sposta-opzione{
     background: var(--wood-lighter); border: 1px solid var(--line); color: var(--paper);
@@ -718,6 +742,7 @@
     <div class="resoconto-tabs">
       <button class="resoconto-tab active" data-periodo="oggi">Oggi</button>
       <button class="resoconto-tab" data-periodo="mese">Questo mese</button>
+      <button class="resoconto-tab" data-periodo="archivio">📅 Archivio comande</button>
     </div>
     <div id="resocontoContenuto" class="resoconto-contenuto"></div>
   </div>
@@ -1503,6 +1528,10 @@ function calcolaResoconto(dataInizio, dataFine){
 }
 
 function renderResoconto(periodo){
+  if(periodo === 'archivio'){
+    renderArchivioComande(chiaveGiorno(new Date()));
+    return;
+  }
   const oggi = new Date();
   const oggiKey = chiaveGiorno(oggi);
   let inizio, fine;
@@ -1535,6 +1564,80 @@ function renderResoconto(periodo){
       <span>${fmtEuro(totaleGenerale)}</span>
     </div>
   `;
+}
+
+// Elenco di tutte le comande (ordini completi, con i prodotti dentro) di un
+// giorno scelto, per poter ricontrollare cosa è stato fatto in una data
+// passata. Usa lo stesso storico salvato per il resoconto vendite.
+function renderArchivioComande(dataISO){
+  const cont = document.getElementById('resocontoContenuto');
+  const storico = leggiStorico();
+  const giorno = storico[dataISO] || {};
+  const ordini = Object.entries(giorno)
+    .map(([numero, dati]) => ({ numero: parseInt(numero), ...dati }))
+    .sort((a, b) => a.numero - b.numero);
+
+  const dataFormattata = new Date(dataISO + 'T12:00:00').toLocaleDateString('it-IT', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  let html = `
+    <div class="archivio-selettore">
+      <button id="archivioGiornoPrima" class="archivio-freccia">◀</button>
+      <input type="date" id="archivioGiornoInput" value="${dataISO}" max="${chiaveGiorno(new Date())}">
+      <button id="archivioGiornoDopo" class="archivio-freccia">▶</button>
+    </div>
+    <div class="archivio-data-titolo">${dataFormattata}</div>
+  `;
+
+  if(ordini.length === 0){
+    html += '<div class="resoconto-vuoto">Nessuna comanda registrata in questo giorno.</div>';
+    cont.innerHTML = html;
+    collegaEventiArchivio(dataISO);
+    return;
+  }
+
+  const totaleGiorno = ordini.reduce((s, o) => s + o.totale, 0);
+
+  html += ordini.map(o => {
+    const righeProdotti = (o.voci || []).map(v => {
+      const p = prod(v.catId);
+      const nome = p ? p.base : '(prodotto rimosso)';
+      return `${v.qty}× ${nome}`;
+    }).join(', ');
+    return `
+      <div class="archivio-ordine">
+        <div class="archivio-ordine-riga1">
+          <span class="archivio-numero">N.${String(o.numero).padStart(3,'0')}</span>
+          <span class="archivio-totale">${fmtEuro(o.totale)}</span>
+        </div>
+        <div class="archivio-ordine-prodotti">${righeProdotti}</div>
+      </div>
+    `;
+  }).join('') + `
+    <div class="resoconto-totale">
+      <span>Totale incasso del giorno</span>
+      <span>${fmtEuro(totaleGiorno)}</span>
+    </div>
+  `;
+
+  cont.innerHTML = html;
+  collegaEventiArchivio(dataISO);
+}
+
+function collegaEventiArchivio(dataISO){
+  document.getElementById('archivioGiornoInput').addEventListener('change', (e) => {
+    renderArchivioComande(e.target.value);
+  });
+  document.getElementById('archivioGiornoPrima').addEventListener('click', () => {
+    const d = new Date(dataISO + 'T12:00:00');
+    d.setDate(d.getDate() - 1);
+    renderArchivioComande(chiaveGiorno(d));
+  });
+  document.getElementById('archivioGiornoDopo').addEventListener('click', () => {
+    const d = new Date(dataISO + 'T12:00:00');
+    d.setDate(d.getDate() + 1);
+    if(chiaveGiorno(d) > chiaveGiorno(new Date())) return; // non si va nel futuro
+    renderArchivioComande(chiaveGiorno(d));
+  });
 }
 
 document.getElementById('btnResoconto').addEventListener('click', () => {
