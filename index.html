@@ -1843,7 +1843,8 @@ function finalizzaOrdine(){
 // ---------------------------------------------------------------------
 const STAMPANTE_USB_VENDOR = '0x1504';  // BIXOLON
 const STAMPANTE_USB_PRODUCT = '0x0016'; // SRP-F310
-const RIGA_ESC = 42; // caratteri per riga in formato testo grezzo
+const RIGA_ESC = 42; // caratteri per riga in formato testo grezzo (scontrino cliente, invariato)
+const RIGA_ESC_COMANDA = 32; // caratteri per riga per la comanda cucina, stampata a 58mm
 
 // La stampante non stampa correttamente il simbolo "€" (la sua codifica
 // interna non lo supporta), quindi sui documenti stampati usiamo "EUR"
@@ -1897,6 +1898,25 @@ function padDestraEscFormattata(sinistraVisibile, sinistraConCodici, destra, lar
   return sinistraConCodici + ' '.repeat(Math.max(spazi, 1)) + destra;
 }
 
+// Va a capo per parole intere quando una riga supera la larghezza data, invece
+// di lasciare che sia la stampante a tagliarla a metà parola (utile sul
+// rotolo stretto da 58mm della comanda cucina, dove il margine è poco).
+function avvolgiTesto(testo, larghezza){
+  const parole = testo.split(' ').filter(Boolean);
+  const righe = [];
+  let riga = '';
+  parole.forEach(parola => {
+    if(riga && (riga + ' ' + parola).length > larghezza){
+      righe.push(riga);
+      riga = parola;
+    } else {
+      riga = riga ? riga + ' ' + parola : parola;
+    }
+  });
+  if(riga) righe.push(riga);
+  return righe.length ? righe : [''];
+}
+
 function escComandaCucina(ordine){
   let t = P_INIT + '\n\n\n\n\n' + P_CENTRO + P_BOLD_ON; // ~2cm di spazio prima dell'intestazione, per agganciare la comanda nel porta-comande
   t += P_GRANDE_ON + P_BOLD_ON + `N.${String(ordine.numero).padStart(3,'0')}  ${fmtOra(ordine.orario)}` + P_BOLD_OFF + P_GRANDE_OFF + '\n';
@@ -1904,8 +1924,12 @@ function escComandaCucina(ordine){
   if(ordine.tavolo) t += 'TAVOLO ' + ordine.tavolo + '\n';
   if(ordine.nomeCliente) t += sanificaPerStampa(ordine.nomeCliente) + '\n';
   if(ordine.orarioRitiro) t += P_BOLD_ON + '*** RITIRO ORE ' + ordine.orarioRitiro + ' ***' + P_BOLD_OFF + '\n';
-  if(ordine.noteOrdine) t += P_BOLD_ON + '*** ' + sanificaPerStampa(ordine.noteOrdine).toUpperCase() + ' ***' + P_BOLD_OFF + '\n';
-  t += P_BOLD_OFF + P_SINISTRA + '-'.repeat(RIGA_ESC) + '\n';
+  if(ordine.noteOrdine){
+    avvolgiTesto(sanificaPerStampa(ordine.noteOrdine).toUpperCase(), RIGA_ESC_COMANDA - 8).forEach(riga => {
+      t += P_BOLD_ON + '*** ' + riga + ' ***' + P_BOLD_OFF + '\n';
+    });
+  }
+  t += P_BOLD_OFF + P_SINISTRA + '-'.repeat(RIGA_ESC_COMANDA) + '\n';
   // Le bibite non vanno in cucina: escono solo sullo scontrino cliente.
   const vociCucina = ordine.voci.filter(v => prod(v.catId).category !== '🍺 Bevande');
   const categorie = [...new Set(vociCucina.map(v => prod(v.catId).category))];
@@ -1913,9 +1937,19 @@ function escComandaCucina(ordine){
     t += P_BOLD_ON + cat.replace(/[^\x00-\x7F]/g, '') + P_BOLD_OFF + '\n';
     vociCucina.filter(v => prod(v.catId).category === cat).forEach(v => {
       const p = prod(v.catId);
-      t += P_GRANDE_ON + P_BOLD_ON + sanificaPerStampa(`${v.qty} ${p.base}`).toUpperCase() + P_BOLD_OFF + P_GRANDE_OFF + '\n';
-      if(p.note) t += P_GRASSETTO_VARIAZIONE_ON + `  - ${sanificaPerStampa(p.note).toUpperCase()}\n` + P_GRASSETTO_VARIAZIONE_OFF;
-      noteLineaCucina(v).forEach(g => t += P_GRASSETTO_VARIAZIONE_ON + `  - ${sanificaPerStampa(g).toUpperCase()}\n` + P_GRASSETTO_VARIAZIONE_OFF);
+      avvolgiTesto(sanificaPerStampa(`${v.qty} ${p.base}`).toUpperCase(), RIGA_ESC_COMANDA).forEach(riga => {
+        t += P_GRANDE_ON + P_BOLD_ON + riga + P_BOLD_OFF + P_GRANDE_OFF + '\n';
+      });
+      if(p.note){
+        avvolgiTesto(sanificaPerStampa(p.note).toUpperCase(), RIGA_ESC_COMANDA - 4).forEach((riga, i) => {
+          t += P_GRASSETTO_VARIAZIONE_ON + `  ${i === 0 ? '-' : ' '} ${riga}\n` + P_GRASSETTO_VARIAZIONE_OFF;
+        });
+      }
+      noteLineaCucina(v).forEach(g => {
+        avvolgiTesto(sanificaPerStampa(g).toUpperCase(), RIGA_ESC_COMANDA - 4).forEach((riga, i) => {
+          t += P_GRASSETTO_VARIAZIONE_ON + `  ${i === 0 ? '-' : ' '} ${riga}\n` + P_GRASSETTO_VARIAZIONE_OFF;
+        });
+      });
     });
   });
   t += '\n\n\n' + P_TAGLIO; // spazio normale dopo, il taglio è già più in basso
