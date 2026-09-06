@@ -339,7 +339,7 @@
     );
     box-shadow: 0 6px 14px rgba(0,0,0,0.35);
   }
-  .receipt .r-head{ text-align:center; font-weight:800; font-size: 24px; margin-bottom:2px; }
+  .receipt .r-head{ text-align:center; font-weight:800; font-size: 30px; margin-bottom:2px; }
   .receipt .r-data{ text-align:center; font-size: 12px; color: var(--ink-soft); margin-bottom:4px; }
   .receipt .r-cliente{ text-align:center; font-size: 13px; color: var(--ink-soft); margin-bottom: 4px; }
   .receipt .r-ritiro{ text-align:center; font-size: 15px; font-weight:800; color: var(--ember-dark); margin-bottom: 6px; }
@@ -380,7 +380,7 @@
 
   /* Comanda cucina a schermo: caratteri più grandi per leggerla meglio da lontano */
   #receiptView.vista-cucina .receipt{ font-size: 21px; padding: 22px 20px 30px; }
-  #receiptView.vista-cucina .r-head{ font-size: 28px; }
+  #receiptView.vista-cucina .r-head{ font-size: 36px; }
   #receiptView.vista-cucina .r-data{ font-size: 14px; }
   #receiptView.vista-cucina .r-cat{ font-size: 19px; margin: 14px 0 6px; }
   #receiptView.vista-cucina .r-row{ padding: 4px 0; }
@@ -532,7 +532,14 @@
     50%{ background: #5a4a1f; }
   }
   .order-card .top{ display:flex; align-items:center; gap:12px; }
-  .order-card .num{ font-family:'Big Shoulders Display', sans-serif; font-weight:800; font-size:30px; color: var(--gold); }
+  .order-card .num{
+    font-family:'Big Shoulders Display', sans-serif; font-weight:800; font-size:30px; color: var(--gold);
+    animation: lampeggioNumero 1.4s ease-in-out infinite;
+  }
+  @keyframes lampeggioNumero{
+    0%, 100%{ opacity: 1; }
+    50%{ opacity: 0.35; }
+  }
   .order-card .cliente{ font-size: 16px; color: var(--paper); font-weight:600; }
   .order-card .ritiro-badge{ font-size: 14px; color: var(--ember); font-weight:700; }
   .order-card.late .num{ color: var(--ember); }
