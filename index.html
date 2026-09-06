@@ -339,7 +339,8 @@
     );
     box-shadow: 0 6px 14px rgba(0,0,0,0.35);
   }
-  .receipt .r-head{ text-align:center; font-weight:800; font-size: 20px; margin-bottom:4px; }
+  .receipt .r-head{ text-align:center; font-weight:800; font-size: 24px; margin-bottom:2px; }
+  .receipt .r-data{ text-align:center; font-size: 12px; color: var(--ink-soft); margin-bottom:4px; }
   .receipt .r-cliente{ text-align:center; font-size: 13px; color: var(--ink-soft); margin-bottom: 4px; }
   .receipt .r-ritiro{ text-align:center; font-size: 15px; font-weight:800; color: var(--ember-dark); margin-bottom: 6px; }
   .receipt .r-meta{ text-align:center; font-size:11px; color: var(--ink-soft); margin-bottom:10px; }
@@ -379,7 +380,8 @@
 
   /* Comanda cucina a schermo: caratteri più grandi per leggerla meglio da lontano */
   #receiptView.vista-cucina .receipt{ font-size: 21px; padding: 22px 20px 30px; }
-  #receiptView.vista-cucina .r-head{ font-size: 24px; }
+  #receiptView.vista-cucina .r-head{ font-size: 28px; }
+  #receiptView.vista-cucina .r-data{ font-size: 14px; }
   #receiptView.vista-cucina .r-cat{ font-size: 19px; margin: 14px 0 6px; }
   #receiptView.vista-cucina .r-row{ padding: 4px 0; }
   #receiptView.vista-cucina .r-note{ font-size: 15px; }
@@ -1266,7 +1268,8 @@ function htmlComandaCucina(ordine){
   const categorie = [...new Set(vociCucina.map(v => prod(v.catId).category))];
   return `
     <div class="receipt">
-      <div class="r-head">N.${String(ordine.numero).padStart(3,'0')} &nbsp; ${fmtData(ordine.orario)} ${fmtOra(ordine.orario)}</div>
+      <div class="r-head">N.${String(ordine.numero).padStart(3,'0')} &nbsp; ${fmtOra(ordine.orario)}</div>
+      <div class="r-data">${fmtData(ordine.orario)}</div>
       ${ordine.tavolo ? `<div class="r-cliente">Tavolo ${ordine.tavolo}</div>` : ''}
       ${ordine.nomeCliente ? `<div class="r-cliente">👤 ${ordine.nomeCliente}</div>` : ''}
       ${ordine.orarioRitiro ? `<div class="r-ritiro">⏰ RITIRO ORE ${ordine.orarioRitiro}</div>` : ''}
@@ -1287,7 +1290,8 @@ function htmlScontrinoCliente(ordine){
   const categorie = [...new Set(ordine.voci.map(v => prod(v.catId).category))];
   return `
     <div class="receipt">
-      <div class="r-head">N.${String(ordine.numero).padStart(3,'0')} &nbsp; ${fmtData(ordine.orario)} ${fmtOra(ordine.orario)}</div>
+      <div class="r-head">N.${String(ordine.numero).padStart(3,'0')} &nbsp; ${fmtOra(ordine.orario)}</div>
+      <div class="r-data">${fmtData(ordine.orario)}</div>
       ${ordine.tavolo ? `<div class="r-cliente">Tavolo ${ordine.tavolo}</div>` : ''}
       ${ordine.nomeCliente ? `<div class="r-cliente">👤 ${ordine.nomeCliente}</div>` : ''}
       ${ordine.orarioRitiro ? `<div class="r-ritiro">⏰ RITIRO ORE ${ordine.orarioRitiro}</div>` : ''}
@@ -1316,7 +1320,8 @@ function htmlComandaCucinaEditabile(righe, numero, orario){
   const categorie = [...new Set(righe.map(l => prod(l.catId).category))];
   return `
     <div class="receipt">
-      <div class="r-head">N.${String(numero).padStart(3,'0')} &nbsp; ${fmtData(orario)} ${fmtOra(orario)}</div>
+      <div class="r-head">N.${String(numero).padStart(3,'0')} &nbsp; ${fmtOra(orario)}</div>
+      <div class="r-data">${fmtData(orario)}</div>
       ${tavoloCorrente ? `<div class="r-cliente">Tavolo ${tavoloCorrente}</div>` : ''}
       ${nomeClienteCorrente.trim() ? `<div class="r-cliente">👤 ${nomeClienteCorrente.trim()}</div>` : ''}
       ${orarioRitiroCorrente ? `<div class="r-ritiro">⏰ RITIRO ORE ${orarioRitiroCorrente}</div>` : ''}
@@ -1887,7 +1892,8 @@ function padDestraEscFormattata(sinistraVisibile, sinistraConCodici, destra, lar
 
 function escComandaCucina(ordine){
   let t = P_INIT + '\n\n\n\n\n' + P_CENTRO + P_BOLD_ON; // ~2cm di spazio prima dell'intestazione, per agganciare la comanda nel porta-comande
-  t += P_BOLD_ON + `N.${String(ordine.numero).padStart(3,'0')}  ${fmtData(ordine.orario)} ${fmtOra(ordine.orario)}` + P_BOLD_OFF + '\n';
+  t += P_GRANDE_ON + P_BOLD_ON + `N.${String(ordine.numero).padStart(3,'0')}  ${fmtOra(ordine.orario)}` + P_BOLD_OFF + P_GRANDE_OFF + '\n';
+  t += `${fmtData(ordine.orario)}\n`;
   if(ordine.tavolo) t += 'TAVOLO ' + ordine.tavolo + '\n';
   if(ordine.nomeCliente) t += sanificaPerStampa(ordine.nomeCliente) + '\n';
   if(ordine.orarioRitiro) t += P_BOLD_ON + '*** RITIRO ORE ' + ordine.orarioRitiro + ' ***' + P_BOLD_OFF + '\n';
@@ -1911,7 +1917,8 @@ function escComandaCucina(ordine){
 
 function escScontrinoCliente(ordine){
   let t = P_INIT + P_CENTRO + P_BOLD_ON;
-  t += P_BOLD_ON + `N.${String(ordine.numero).padStart(3,'0')}  ${fmtData(ordine.orario)} ${fmtOra(ordine.orario)}` + P_BOLD_OFF + '\n';
+  t += P_GRANDE_ON + P_BOLD_ON + `N.${String(ordine.numero).padStart(3,'0')}  ${fmtOra(ordine.orario)}` + P_BOLD_OFF + P_GRANDE_OFF + '\n';
+  t += `${fmtData(ordine.orario)}\n`;
   if(ordine.tavolo) t += 'TAVOLO ' + ordine.tavolo + '\n';
   if(ordine.nomeCliente) t += sanificaPerStampa(ordine.nomeCliente) + '\n';
   if(ordine.orarioRitiro) t += P_BOLD_ON + '*** RITIRO ORE ' + ordine.orarioRitiro + ' ***' + P_BOLD_OFF + '\n';
