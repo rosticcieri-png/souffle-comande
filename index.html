@@ -155,15 +155,14 @@
 
   .cat-block + .cat-block{ margin-top: 16px; }
 
-  .menu-pagine{ display:flex; gap:8px; margin-bottom:0; flex-wrap:wrap; }
-  .quantita-riga{ display:flex; align-items:center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-  .quantita-label{ font-size: 14px; color: #c9bda3; flex-shrink:0; }
-  .quantita-tasti{ display:flex; gap: 6px; flex-wrap: wrap; }
+  .menu-pagine{ display:flex; align-items:center; gap:8px; margin-bottom:0; flex-wrap:wrap; }
+  .quantita-separatore{ width:1px; align-self: stretch; background: var(--line); margin: 0 4px; }
+  .quantita-tasti{ display:flex; gap: 8px; flex-wrap: wrap; }
   .quantita-tasto{
-    width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line);
-    background: var(--wood-lighter); color: var(--paper); font-size: 15px; font-weight:700; cursor:pointer;
+    width: 46px; height: 46px; border-radius: 10px; border: 2px solid #4a90d9;
+    background: #1f3a52; color: #bfe0ff; font-size: 19px; font-weight:800; cursor:pointer;
   }
-  .quantita-tasto.active{ background: var(--gold); border-color: var(--gold); color: var(--ink); }
+  .quantita-tasto.active{ background: #4a90d9; border-color: #4a90d9; color: #08202f; }
   .pagina-tab{
     padding: 10px 18px; border-radius: 8px; border: 1px solid var(--line);
     background: var(--wood-lighter); color: var(--paper); cursor:pointer;
@@ -340,7 +339,7 @@
     );
     box-shadow: 0 6px 14px rgba(0,0,0,0.35);
   }
-  .receipt .r-head{ text-align:center; font-weight:600; margin-bottom:2px; }
+  .receipt .r-head{ text-align:center; font-weight:800; font-size: 20px; margin-bottom:4px; }
   .receipt .r-cliente{ text-align:center; font-size: 13px; color: var(--ink-soft); margin-bottom: 4px; }
   .receipt .r-ritiro{ text-align:center; font-size: 15px; font-weight:800; color: var(--ember-dark); margin-bottom: 6px; }
   .receipt .r-meta{ text-align:center; font-size:11px; color: var(--ink-soft); margin-bottom:10px; }
@@ -380,7 +379,7 @@
 
   /* Comanda cucina a schermo: caratteri più grandi per leggerla meglio da lontano */
   #receiptView.vista-cucina .receipt{ font-size: 21px; padding: 22px 20px 30px; }
-  #receiptView.vista-cucina .r-head{ font-size: 17px; }
+  #receiptView.vista-cucina .r-head{ font-size: 24px; }
   #receiptView.vista-cucina .r-cat{ font-size: 19px; margin: 14px 0 6px; }
   #receiptView.vista-cucina .r-row{ padding: 4px 0; }
   #receiptView.vista-cucina .r-note{ font-size: 15px; }
@@ -481,6 +480,18 @@
   .archivio-numero{ font-weight:700; color: var(--gold); font-family:'IBM Plex Mono', monospace; }
   .archivio-totale{ font-weight:700; color: var(--paper); }
   .archivio-ordine-prodotti{ font-size: 14px; color:#c9bda3; line-height:1.5; }
+  .archivio-ordine-riga1{ cursor:pointer; }
+  .archivio-ordine.aperto{ border-color: var(--gold); }
+  .archivio-dettaglio{
+    margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line);
+  }
+  .archivio-dettaglio-intestazione{ font-size: 13px; color: var(--gold); margin-bottom: 8px; }
+  .archivio-dettaglio-riga{ display:flex; justify-content:space-between; font-size: 14px; color: var(--paper); margin-bottom: 2px; }
+  .archivio-dettaglio-nota{ font-size: 12px; color:#c9bda3; margin-left: 10px; margin-bottom: 4px; }
+  .archivio-ristampa-btn{
+    margin-top: 10px; width:100%; padding: 10px; border-radius: 8px; border: 1px solid var(--basil);
+    background: var(--basil); color: var(--ink); font-weight:700; font-size: 15px; cursor:pointer;
+  }
   .sposta-lista{ display:flex; flex-direction:column; gap:10px; }
   .sposta-opzione{
     background: var(--wood-lighter); border: 1px solid var(--line); color: var(--paper);
@@ -844,10 +855,7 @@
         <button class="pagina-tab" data-pagina="bibite">🍺 Bibite</button>
         <button class="pagina-tab" data-pagina="pizze">🍕 Pizze</button>
         <button class="pagina-tab" data-pagina="saltimbocca">🥙 Saltimbocca</button>
-      </div>
-
-      <div class="quantita-riga">
-        <span class="quantita-label">Quantità da aggiungere:</span>
+        <span class="quantita-separatore"></span>
         <div class="quantita-tasti" id="quantitaTasti">
           <button class="quantita-tasto active" data-qty="1">1</button>
           <button class="quantita-tasto" data-qty="2">2</button>
@@ -1258,7 +1266,7 @@ function htmlComandaCucina(ordine){
   const categorie = [...new Set(vociCucina.map(v => prod(v.catId).category))];
   return `
     <div class="receipt">
-      <div class="r-head">SOUFFLÉ &nbsp; N.${String(ordine.numero).padStart(3,'0')} &nbsp; ${fmtData(ordine.orario)} ${fmtOra(ordine.orario)}</div>
+      <div class="r-head">N.${String(ordine.numero).padStart(3,'0')} &nbsp; ${fmtData(ordine.orario)} ${fmtOra(ordine.orario)}</div>
       ${ordine.tavolo ? `<div class="r-cliente">Tavolo ${ordine.tavolo}</div>` : ''}
       ${ordine.nomeCliente ? `<div class="r-cliente">👤 ${ordine.nomeCliente}</div>` : ''}
       ${ordine.orarioRitiro ? `<div class="r-ritiro">⏰ RITIRO ORE ${ordine.orarioRitiro}</div>` : ''}
@@ -1279,7 +1287,7 @@ function htmlScontrinoCliente(ordine){
   const categorie = [...new Set(ordine.voci.map(v => prod(v.catId).category))];
   return `
     <div class="receipt">
-      <div class="r-head">SOUFFLÉ &nbsp; N.${String(ordine.numero).padStart(3,'0')} &nbsp; ${fmtData(ordine.orario)} ${fmtOra(ordine.orario)}</div>
+      <div class="r-head">N.${String(ordine.numero).padStart(3,'0')} &nbsp; ${fmtData(ordine.orario)} ${fmtOra(ordine.orario)}</div>
       ${ordine.tavolo ? `<div class="r-cliente">Tavolo ${ordine.tavolo}</div>` : ''}
       ${ordine.nomeCliente ? `<div class="r-cliente">👤 ${ordine.nomeCliente}</div>` : ''}
       ${ordine.orarioRitiro ? `<div class="r-ritiro">⏰ RITIRO ORE ${ordine.orarioRitiro}</div>` : ''}
@@ -1308,7 +1316,7 @@ function htmlComandaCucinaEditabile(righe, numero, orario){
   const categorie = [...new Set(righe.map(l => prod(l.catId).category))];
   return `
     <div class="receipt">
-      <div class="r-head">SOUFFLÉ &nbsp; N.${String(numero).padStart(3,'0')} &nbsp; ${fmtData(orario)} ${fmtOra(orario)}</div>
+      <div class="r-head">N.${String(numero).padStart(3,'0')} &nbsp; ${fmtData(orario)} ${fmtOra(orario)}</div>
       ${tavoloCorrente ? `<div class="r-cliente">Tavolo ${tavoloCorrente}</div>` : ''}
       ${nomeClienteCorrente.trim() ? `<div class="r-cliente">👤 ${nomeClienteCorrente.trim()}</div>` : ''}
       ${orarioRitiroCorrente ? `<div class="r-ritiro">⏰ RITIRO ORE ${orarioRitiroCorrente}</div>` : ''}
@@ -1528,8 +1536,17 @@ function registraStorico(ordine){
     if(!storico[giorno]) storico[giorno] = {};
     // Salviamo/aggiorniamo la voce per numero ordine: così se un ordine
     // viene modificato più tardi, il resoconto riflette sempre l'ultima
-    // versione invece di contare due volte.
-    storico[giorno][ordine.numero] = { voci: ordine.voci, totale: ordine.totale };
+    // versione invece di contare due volte. Salviamo tutti i dati (non solo
+    // voci/totale) così l'ordine si può anche riaprire e ristampare dall'archivio.
+    storico[giorno][ordine.numero] = {
+      voci: ordine.voci,
+      totale: ordine.totale,
+      orario: ordine.orario.toISOString(),
+      tavolo: ordine.tavolo || null,
+      nomeCliente: ordine.nomeCliente || null,
+      orarioRitiro: ordine.orarioRitiro || null,
+      noteOrdine: ordine.noteOrdine || null,
+    };
     localStorage.setItem(CHIAVE_STORICO, JSON.stringify(storico));
   } catch(e){ /* storico non disponibile: il resoconto sarà solo incompleto, l'app funziona comunque */ }
 }
@@ -1605,6 +1622,8 @@ function renderResoconto(periodo){
 // Elenco di tutte le comande (ordini completi, con i prodotti dentro) di un
 // giorno scelto, per poter ricontrollare cosa è stato fatto in una data
 // passata. Usa lo stesso storico salvato per il resoconto vendite.
+let archivioOrdineApertoNumero = null; // numero dell'ordine aperto/espanso nell'archivio (uno alla volta)
+
 function renderArchivioComande(dataISO){
   const cont = document.getElementById('resocontoContenuto');
   const storico = leggiStorico();
@@ -1634,18 +1653,47 @@ function renderArchivioComande(dataISO){
   const totaleGiorno = ordini.reduce((s, o) => s + o.totale, 0);
 
   html += ordini.map(o => {
-    const righeProdotti = (o.voci || []).map(v => {
+    const aperto = o.numero === archivioOrdineApertoNumero;
+    const righeProdottiCompatte = (o.voci || []).map(v => {
       const p = prod(v.catId);
       const nome = p ? p.base : '(prodotto rimosso)';
       return `${v.qty}× ${nome}`;
     }).join(', ');
+
+    let dettaglio = '';
+    if(aperto){
+      const righeComplete = (o.voci || []).map(v => {
+        const p = prod(v.catId);
+        const nome = p ? p.base : '(prodotto rimosso)';
+        const noteComplete = noteLinea(v);
+        return `<div class="archivio-dettaglio-riga">
+          <span>${v.qty}× ${nome}</span>
+          <span>${fmtEuro(prezzoLinea(v) * v.qty)}</span>
+        </div>${noteComplete.map(n => `<div class="archivio-dettaglio-nota">- ${n}</div>`).join('')}`;
+      }).join('');
+      const intestazione = [
+        o.tavolo ? `Tavolo ${o.tavolo}` : null,
+        o.nomeCliente || null,
+        o.orarioRitiro ? `⏰ Ritiro ore ${o.orarioRitiro}` : null,
+        o.noteOrdine ? `📝 ${o.noteOrdine}` : null,
+      ].filter(Boolean).join(' · ');
+      dettaglio = `
+        <div class="archivio-dettaglio">
+          ${intestazione ? `<div class="archivio-dettaglio-intestazione">${intestazione}</div>` : ''}
+          ${righeComplete}
+          <button class="archivio-ristampa-btn" data-data="${dataISO}" data-numero="${o.numero}">🖨️ Ristampa</button>
+        </div>
+      `;
+    }
+
     return `
-      <div class="archivio-ordine">
-        <div class="archivio-ordine-riga1">
-          <span class="archivio-numero">N.${String(o.numero).padStart(3,'0')}</span>
+      <div class="archivio-ordine ${aperto ? 'aperto' : ''}">
+        <div class="archivio-ordine-riga1 archivio-ordine-clic" data-numero="${o.numero}">
+          <span class="archivio-numero">N.${String(o.numero).padStart(3,'0')} ${aperto ? '▲' : '▼'}</span>
           <span class="archivio-totale">${fmtEuro(o.totale)}</span>
         </div>
-        <div class="archivio-ordine-prodotti">${righeProdotti}</div>
+        <div class="archivio-ordine-prodotti">${righeProdottiCompatte}</div>
+        ${dettaglio}
       </div>
     `;
   }).join('') + `
@@ -1656,7 +1704,37 @@ function renderArchivioComande(dataISO){
   `;
 
   cont.innerHTML = html;
+  cont.querySelectorAll('.archivio-ordine-clic').forEach(el => {
+    el.addEventListener('click', () => {
+      const numero = parseInt(el.dataset.numero);
+      archivioOrdineApertoNumero = (archivioOrdineApertoNumero === numero) ? null : numero;
+      renderArchivioComande(dataISO);
+    });
+  });
+  cont.querySelectorAll('.archivio-ristampa-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      ristampaOrdineArchiviato(btn.dataset.data, parseInt(btn.dataset.numero));
+    });
+  });
   collegaEventiArchivio(dataISO);
+}
+
+function ristampaOrdineArchiviato(dataISO, numero){
+  const storico = leggiStorico();
+  const dati = storico[dataISO] && storico[dataISO][numero];
+  if(!dati) return;
+  const ordineRicostruito = {
+    numero,
+    orario: new Date(dati.orario),
+    voci: dati.voci,
+    totale: dati.totale,
+    tavolo: dati.tavolo || null,
+    nomeCliente: dati.nomeCliente || null,
+    orarioRitiro: dati.orarioRitiro || null,
+    noteOrdine: dati.noteOrdine || null,
+  };
+  stampaOrdine('entrambe', ordineRicostruito);
 }
 
 function collegaEventiArchivio(dataISO){
@@ -1809,7 +1887,7 @@ function padDestraEscFormattata(sinistraVisibile, sinistraConCodici, destra, lar
 
 function escComandaCucina(ordine){
   let t = P_INIT + '\n\n\n\n\n' + P_CENTRO + P_BOLD_ON; // ~2cm di spazio prima dell'intestazione, per agganciare la comanda nel porta-comande
-  t += `SOUFFLE  N.${String(ordine.numero).padStart(3,'0')}  ${fmtData(ordine.orario)} ${fmtOra(ordine.orario)}\n`;
+  t += P_BOLD_ON + `N.${String(ordine.numero).padStart(3,'0')}  ${fmtData(ordine.orario)} ${fmtOra(ordine.orario)}` + P_BOLD_OFF + '\n';
   if(ordine.tavolo) t += 'TAVOLO ' + ordine.tavolo + '\n';
   if(ordine.nomeCliente) t += sanificaPerStampa(ordine.nomeCliente) + '\n';
   if(ordine.orarioRitiro) t += P_BOLD_ON + '*** RITIRO ORE ' + ordine.orarioRitiro + ' ***' + P_BOLD_OFF + '\n';
@@ -1833,7 +1911,7 @@ function escComandaCucina(ordine){
 
 function escScontrinoCliente(ordine){
   let t = P_INIT + P_CENTRO + P_BOLD_ON;
-  t += `SOUFFLE  N.${String(ordine.numero).padStart(3,'0')}  ${fmtData(ordine.orario)} ${fmtOra(ordine.orario)}\n`;
+  t += P_BOLD_ON + `N.${String(ordine.numero).padStart(3,'0')}  ${fmtData(ordine.orario)} ${fmtOra(ordine.orario)}` + P_BOLD_OFF + '\n';
   if(ordine.tavolo) t += 'TAVOLO ' + ordine.tavolo + '\n';
   if(ordine.nomeCliente) t += sanificaPerStampa(ordine.nomeCliente) + '\n';
   if(ordine.orarioRitiro) t += P_BOLD_ON + '*** RITIRO ORE ' + ordine.orarioRitiro + ' ***' + P_BOLD_OFF + '\n';
