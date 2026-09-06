@@ -287,6 +287,8 @@
   .send-btn.small{ background: var(--wood-lighter); border: 1px solid var(--ember); }
   .send-btn.sospeso-btn{ border-color: var(--gold); color: var(--gold); background: var(--wood-lighter); }
   .send-btn.sospeso-btn:hover{ background: var(--gold); color: var(--ink); }
+  .send-btn.annulla-ordine-btn{ border-color: #c0392b; color: #e57368; background: var(--wood-lighter); }
+  .send-btn.annulla-ordine-btn:hover{ background: #c0392b; color: #fff; }
   .send-btn:hover{ background: var(--ember-dark); }
   .send-btn.small:hover{ background: var(--ember); }
   .send-btn:disabled{ background:#5a4a37; border-color:#5a4a37; cursor:not-allowed; }
@@ -837,6 +839,9 @@
     <div class="send-row">
       <button class="send-btn small sospeso-btn" id="sendSospesoBtn">📌 Salva senza stampare (conto sospeso)</button>
     </div>
+    <div class="send-row">
+      <button class="send-btn annulla-ordine-btn" id="annullaOrdineBtn">🗑️ Annulla ordine</button>
+    </div>
   </div>
 
   <div class="panel menu-panel">
@@ -1256,7 +1261,7 @@ function renderCurrent(){
   const righe = currentOrder.filter(l => l.qty > 0);
   if(righe.length === 0) editandoLineId = null;
 
-  ['sendCucinaBtn','sendClienteBtn','sendEntrambeBtn','sendSospesoBtn'].forEach(id => {
+  ['sendCucinaBtn','sendClienteBtn','sendEntrambeBtn','sendSospesoBtn','annullaOrdineBtn'].forEach(id => {
     document.getElementById(id).disabled = righe.length === 0;
   });
   renderTavoli();
@@ -2100,6 +2105,30 @@ document.getElementById('sendSospesoBtn').addEventListener('click', () => {
   // tardi, quando il cliente paga, riaprendo l'ordine con la matita ✎ e poi
   // usando i pulsanti di stampa normali.
   finalizzaOrdine();
+});
+
+document.getElementById('annullaOrdineBtn').addEventListener('click', () => {
+  if(!currentOrder.some(l => l.qty > 0)) return;
+  if(!confirm("Annullare l'ordine in corso? I prodotti aggiunti andranno persi, senza essere stampati né salvati.")) return;
+  if(editingOrderNumber !== null){
+    // L'ordine originale è già stato inviato in cucina in precedenza: si
+    // scartano solo le aggiunte fatte ora, l'ordine originale resta intatto.
+    uscitaModalitaModifica();
+  } else {
+    currentOrder = [];
+    nomeClienteCorrente = '';
+    orarioRitiroCorrente = '';
+    tavoloCorrente = null;
+    noteOrdineCorrente = '';
+    resettaQuantitaSelezionata();
+    document.getElementById('nomeClienteInput').value = '';
+    document.getElementById('orarioRitiroInput').value = '';
+    document.getElementById('noteOrdineInput').value = '';
+    document.getElementById('orderPanelTitle').textContent = 'Ordine in corso';
+    document.getElementById('editBanner').style.display = 'none';
+    renderCurrent();
+  }
+  mostraSchermata('tavoli');
 });
 
 // ---------------------------------------------------------------------
