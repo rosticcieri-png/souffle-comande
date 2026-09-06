@@ -1143,6 +1143,7 @@ function renderMenu(){
       }
 
       aggiungiRiga(btn.dataset.id, quantitaSelezionata, null);
+      resettaQuantitaSelezionata(); // torna a 1 subito dopo l'aggiunta, per non aggiungerla per sbaglio anche al prossimo prodotto
       renderCurrent();
 
       // Se il prodotto appena aggiunto richiede la scelta dei gusti (es.
