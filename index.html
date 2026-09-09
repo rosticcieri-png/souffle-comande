@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --wood: #2B2118;a
+    --wood: #2B2118;
     --wood-light: #3D2F22;
     --wood-lighter: #4C3B2A;
     --paper: #F7F1E1;
@@ -180,14 +180,14 @@
   }
   .btn-grid{
     display:grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
   }
   @media (max-width: 900px){
-    .btn-grid{ grid-template-columns: repeat(3, 1fr); }
+    .btn-grid{ grid-template-columns: repeat(2, 1fr); }
   }
   @media (max-width: 600px){
-    .btn-grid{ grid-template-columns: repeat(2, 1fr); }
+    .btn-grid{ grid-template-columns: repeat(1, 1fr); }
   }
   .item-btn{
     background: var(--wood-lighter);
@@ -229,15 +229,15 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 12px;
-    padding: 10px 14px;
-    min-height: 116px;
+    gap: 16px;
+    padding: 14px 18px;
+    min-height: 148px;
   }
   .item-thumb{
-    width: 72px;
-    height: 72px;
+    width: 108px;
+    height: 108px;
     object-fit: cover;
-    border-radius: 8px;
+    border-radius: 10px;
     display: block;
     flex-shrink: 0;
     border: 1px solid rgba(255,255,255,0.15);
@@ -247,12 +247,12 @@
     flex-direction: column;
     align-items: flex-start;
     justify-content: center;
-    gap: 4px;
+    gap: 6px;
     flex: 1;
     min-width: 0;
   }
   .item-btn-foto .name{
-    font-size: 17px;
+    font-size: 22px;
     line-height: 1.2;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -261,7 +261,7 @@
     -webkit-box-orient: vertical;
   }
   .item-btn-foto .price{
-    font-size: 16px;
+    font-size: 19px;
     margin-top: 0;
   }
 
