@@ -2454,7 +2454,7 @@ function collegaEventiCard(contenitore){
   });
 }
 
-setInterval(renderBoard, 15000); // aggiorna i tempi trascorsi ogni 15 secondi
+setInterval(() => renderBoard(false), 15000); // aggiorna i tempi trascorsi ogni 15 secondi, senza salvare
 
 // ---------------------------------------------------------------------
 // VISTA CUCINA A SCHERMO — pensata per un secondo monitor collegato allo
@@ -2690,6 +2690,13 @@ function aggiornaSoloOpenOrdersDaAltraFinestra(){
 window.addEventListener('storage', (e) => {
   if(e.key === CHIAVE_STATO) aggiornaSoloOpenOrdersDaAltraFinestra();
 });
+// Quando questa scheda era in background il browser può aver rallentato i
+// suoi timer e ritardato l'evento 'storage': appena torna visibile,
+// ci si allinea subito a ciò che c'è davvero salvato, prima di ridisegnare
+// o (peggio) risalvare dati vecchi sopra a quelli nuovi.
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible') aggiornaSoloOpenOrdersDaAltraFinestra();
+});
 
 caricaStato();
 nomeClienteInput.value = nomeClienteCorrente;
@@ -2697,7 +2704,7 @@ orarioRitiroInput.value = orarioRitiroCorrente;
 noteOrdineInput.value = noteOrdineCorrente;
 renderMenu();
 renderCurrent();
-renderBoard();
+renderBoard(false); // solo disegno: lo stato appena caricato da localStorage è già quello giusto
 mostraSchermata('tavoli');
 
 if(paramsAvvio.get('cucina') === '1'){
@@ -2710,6 +2717,9 @@ if(paramsAvvio.get('cucina') === '1'){
   setInterval(() => { aggiornaSoloOpenOrdersDaAltraFinestra(); renderCucina(); }, 4000); // rete di sicurezza
   window.addEventListener('storage', (e) => {
     if(e.key === CHIAVE_STATO) renderCucina(); // openOrders già aggiornato dal listener generico qui sopra
+  });
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible') renderCucina(); // openOrders già risincronizzato dal listener generico qui sopra
   });
 }
 
