@@ -415,12 +415,21 @@
     cursor:pointer;
   }
   .cucina-overlay .cucina-card{ width:min(640px, 94vw); border-width:10px; cursor:default; }
-  .cucina-overlay .cucina-elapsed{ font-size:1.4em; }
+  .cucina-overlay .cucina-elapsed{ font-size:1.4em; flex-wrap:wrap; row-gap:10px; }
   .cucina-overlay .receipt{ font-size:30px; }
   .cucina-overlay .r-head{ font-size:46px; }
   .cucina-overlay .r-cat{ font-size:26px; }
   .cucina-overlay .r-note{ font-size:21px; }
   .cucina-overlay-hint{ position:fixed; top:22px; right:30px; color:#fff; opacity:.55; font-size:1.1em; }
+  .cucina-pronto-btn{
+    background:#2ecc71; color:#fff; border:none; border-radius:8px;
+    font-weight:800; font-size:1em; padding:6px 14px; cursor:pointer;
+  }
+  .cucina-pronto-btn:hover{ background:#27ae60; }
+  .cucina-overlay .cucina-pronto-btn{
+    font-size:1.5em; padding:18px 22px; border-radius:12px;
+    flex: 1 0 100%; box-sizing:border-box;
+  }
 
   /* OPEN ORDERS BOARD */
   .board{
@@ -558,6 +567,14 @@
     border-color: var(--gold);
     box-shadow: 0 0 0 1px var(--gold) inset;
     animation: pulseGold 1.6s ease-in-out infinite;
+  }
+  .order-card.pronto{
+    border-color: var(--basil);
+    box-shadow: 0 0 0 2px var(--basil) inset;
+  }
+  .order-card .pronto-badge{
+    font-size: 14px; color: var(--basil); font-weight:800;
+    animation: lampeggioNumero 1.4s ease-in-out infinite;
   }
   @keyframes pulse{
     0%, 100%{ background: var(--wood-light); }
@@ -928,7 +945,7 @@
   </div>
   <div class="cucina-grid" id="cucinaGrid"></div>
   <div class="cucina-overlay" id="cucinaOverlay" style="display:none;">
-    <span class="cucina-overlay-hint">Tocca per tornare alla lista</span>
+    <span class="cucina-overlay-hint">Tocca fuori dalla comanda per tornare alla lista</span>
     <div id="cucinaOverlayContenuto"></div>
   </div>
 </div>
@@ -2355,7 +2372,7 @@ function minutiAlRitiro(o){
   return (target.getTime() - Date.now()) / 60000;
 }
 
-function renderBoard(){
+function renderBoard(salva = true){
   const board = document.getElementById('board');
   const boardRitiriWrap = document.getElementById('boardRitiriWrap');
   const boardRitiri = document.getElementById('boardRitiri');
@@ -2373,12 +2390,13 @@ function renderBoard(){
     boardRitiri.innerHTML = programmati.map(o => {
       const m = Math.round(minutiAlRitiro(o));
       return `
-        <div class="order-card" data-numero="${o.numero}">
+        <div class="order-card ${o.pronto ? 'pronto' : ''}" data-numero="${o.numero}">
           <span class="num">N.${String(o.numero).padStart(3,'0')}</span>
           ${o.tavolo ? `<span class="cliente">Tavolo ${o.tavolo}</span>` : ''}
           ${o.nomeCliente ? `<span class="cliente">${o.nomeCliente}</span>` : ''}
           <span class="ritiro-badge">⏰ ${o.orarioRitiro}</span>
           <span class="ritiro-countdown">tra ${m < 60 ? m + ' min' : Math.floor(m/60) + 'h ' + (m%60) + 'min'}</span>
+          ${o.pronto ? '<span class="pronto-badge">🔔 Pronto</span>' : ''}
           <button class="edit-btn" data-numero="${o.numero}" title="Aggiungi prodotti">✎</button>
           <button class="sposta-btn" data-numero="${o.numero}" title="Sposta questo conto">🔀</button>
           <button class="close-btn" data-numero="${o.numero}" title="Ordine servito">✔</button>
@@ -2389,7 +2407,7 @@ function renderBoard(){
 
   if(attivi.length === 0){
     board.innerHTML = '<div class="board-empty">Nessun ordine aperto al momento.</div>';
-    salvaStato();
+    if(salva) salvaStato();
     return;
   }
   board.innerHTML = attivi.map(o => {
@@ -2397,11 +2415,12 @@ function renderBoard(){
     const late = minuti > 15;
     const ritiroAttivato = !!o.orarioRitiro; // è qui perché il suo orario è ormai vicino/passato
     return `
-      <div class="order-card ${late ? 'late' : ''} ${ritiroAttivato ? 'ritiro-attivato' : ''}" data-numero="${o.numero}">
+      <div class="order-card ${late ? 'late' : ''} ${ritiroAttivato ? 'ritiro-attivato' : ''} ${o.pronto ? 'pronto' : ''}" data-numero="${o.numero}">
         <span class="num">N.${String(o.numero).padStart(3,'0')}</span>
         ${o.tavolo ? `<span class="cliente">Tavolo ${o.tavolo}</span>` : ''}
         ${o.nomeCliente ? `<span class="cliente">${o.nomeCliente}</span>` : ''}
         ${o.orarioRitiro ? `<span class="ritiro-badge">⏰ ${o.orarioRitiro}</span>` : ''}
+        ${o.pronto ? '<span class="pronto-badge">🔔 Pronto</span>' : ''}
         <span class="elapsed">${late ? '⚠️' : ''} ${Math.floor(minuti)}′ · ${fmtEuro(o.totale)}</span>
         <button class="edit-btn" data-numero="${o.numero}" title="Aggiungi prodotti">✎</button>
         <button class="sposta-btn" data-numero="${o.numero}" title="Sposta questo conto">🔀</button>
@@ -2409,7 +2428,7 @@ function renderBoard(){
       </div>`;
   }).join('');
   collegaEventiCard(board);
-  salvaStato();
+  if(salva) salvaStato();
 }
 
 function collegaEventiCard(contenitore){
@@ -2427,6 +2446,7 @@ function collegaEventiCard(contenitore){
       e.stopPropagation();
       const n = parseInt(btn.dataset.numero);
       openOrders = openOrders.filter(o => o.numero !== n);
+      salvaStato();
       if(editingOrderNumber === n) uscitaModalitaModifica();
       renderBoard();
       renderTavoli();
@@ -2446,7 +2466,19 @@ setInterval(renderBoard, 15000); // aggiorna i tempi trascorsi ogni 15 secondi
 // ---------------------------------------------------------------------
 function apriVistaCucina(){
   const url = location.href.split('?')[0] + '?cucina=1';
-  window.open(url, '_blank');
+  const finestra = window.open(url, '_blank');
+  // Se il browser blocca il popup, window.open restituisce null (o, in alcuni
+  // browser, una finestra già "chiusa"): in quel caso avvisiamo subito,
+  // altrimenti il pulsante verde "Pronto" sembra sparito nel nulla senza
+  // nessun errore visibile.
+  if(!finestra || finestra.closed || typeof finestra.closed === 'undefined'){
+    alert(
+      'Il browser ha bloccato l\'apertura della Vista Cucina in una nuova scheda.\n\n' +
+      'Cerca l\'icona di blocco popup nella barra degli indirizzi (di solito a destra, ' +
+      'vicino alla barra URL) e scegli "Consenti sempre popup e reindirizzamenti" per ' +
+      'questa pagina, poi premi di nuovo 👨‍🍳.'
+    );
+  }
 }
 
 let ordineInPrimoPianoCucina = null; // numero dell'ordine ingrandito in Vista Cucina, se presente
@@ -2460,6 +2492,7 @@ function htmlCardCucina(o){
     <div class="cucina-card ${late ? 'late' : ''} ${programmato ? 'programmato' : ''}" data-numero="${o.numero}">
       <div class="cucina-elapsed">
         <span class="${late ? 'cucina-warn' : ''}">${late ? '⚠️ ' : ''}${Math.floor(minuti)}′ fa</span>
+        <button class="cucina-pronto-btn" data-numero="${o.numero}">✔ Pronto</button>
       </div>
       ${htmlComandaCucina(o)}
     </div>`;
@@ -2472,7 +2505,7 @@ function renderCucina(){
   const overlayContenuto = document.getElementById('cucinaOverlayContenuto');
   if(!grid) return;
 
-  const coda = [...openOrders].sort((a, b) => a.orario - b.orario); // più vecchio prima = fila
+  const coda = [...openOrders].filter(o => !o.pronto).sort((a, b) => a.orario - b.orario); // solo da preparare, più vecchio prima
   conteggio.textContent = coda.length ? `(${coda.length})` : '';
 
   if(coda.length === 0){
@@ -2502,13 +2535,35 @@ document.getElementById('btnVistaCucina').addEventListener('click', apriVistaCuc
 
 // Tocca un ordine nella griglia per ingrandirlo a tutto schermo; tocca di
 // nuovo (in qualsiasi punto dell'overlay) per tornare alla lista.
+function segnaOrdinePronto(numero){
+  // Segna l'ordine come pronto SOLO nella lista condivisa, senza toccare
+  // l'ordine che la cassa sta eventualmente scrivendo in quel momento.
+  // Non lo elimina: resta evidenziato sulla bacheca della cassa finché
+  // non viene incassato e chiuso da lì con "Ordine servito".
+  try{
+    const raw = localStorage.getItem(CHIAVE_STATO);
+    if(raw){
+      const stato = JSON.parse(raw);
+      stato.openOrders = (stato.openOrders || []).map(o => o.numero === numero ? { ...o, pronto: true } : o);
+      localStorage.setItem(CHIAVE_STATO, JSON.stringify(stato));
+    }
+  } catch(e){ /* memoria locale non disponibile */ }
+  openOrders = openOrders.map(o => o.numero === numero ? { ...o, pronto: true } : o);
+  renderCucina(); // l'overlay si chiude da solo perché non è più da preparare
+}
 document.getElementById('cucinaGrid').addEventListener('click', (e) => {
+  const fattoBtn = e.target.closest('.cucina-pronto-btn');
+  if(fattoBtn){ segnaOrdinePronto(parseInt(fattoBtn.dataset.numero)); return; }
   const card = e.target.closest('.cucina-card');
   if(!card) return;
   ordineInPrimoPianoCucina = parseInt(card.dataset.numero);
   renderCucina();
 });
-document.getElementById('cucinaOverlay').addEventListener('click', () => {
+document.getElementById('cucinaOverlay').addEventListener('click', (e) => {
+  const fattoBtn = e.target.closest('.cucina-pronto-btn');
+  if(fattoBtn){ segnaOrdinePronto(parseInt(fattoBtn.dataset.numero)); return; }
+  const card = e.target.closest('.cucina-card');
+  if(card) return; // tocco sul foglio stesso: non fa nulla, evita chiusure per sbaglio
   ordineInPrimoPianoCucina = null;
   renderCucina();
 });
@@ -2618,6 +2673,24 @@ document.getElementById('noteOrdineMic').addEventListener('click', (e) => {
 // ---------------------------------------------------------------------
 const paramsAvvio = new URLSearchParams(location.search);
 
+// Se un'altra finestra (es. la Vista Cucina) cambia la lista ordini,
+// aggiorna qui SOLO quella — mai l'ordine che si sta eventualmente
+// scrivendo in questa finestra in quel momento.
+function aggiornaSoloOpenOrdersDaAltraFinestra(){
+  try{
+    const raw = localStorage.getItem(CHIAVE_STATO);
+    if(!raw) return;
+    const stato = JSON.parse(raw);
+    if(stato.giorno !== oggiStr()) return;
+    openOrders = (stato.openOrders || []).map(o => ({ ...o, orario: new Date(o.orario) }));
+  } catch(e){ return; }
+  renderBoard(false); // non salva: questa finestra sta solo leggendo, non scrivendo
+  renderTavoli();
+}
+window.addEventListener('storage', (e) => {
+  if(e.key === CHIAVE_STATO) aggiornaSoloOpenOrdersDaAltraFinestra();
+});
+
 caricaStato();
 nomeClienteInput.value = nomeClienteCorrente;
 orarioRitiroInput.value = orarioRitiroCorrente;
@@ -2634,9 +2707,9 @@ if(paramsAvvio.get('cucina') === '1'){
   renderCucina();
   aggiornaOrologioCucina();
   setInterval(aggiornaOrologioCucina, 1000);
-  setInterval(() => { caricaStato(); renderCucina(); }, 4000); // rete di sicurezza
+  setInterval(() => { aggiornaSoloOpenOrdersDaAltraFinestra(); renderCucina(); }, 4000); // rete di sicurezza
   window.addEventListener('storage', (e) => {
-    if(e.key === CHIAVE_STATO){ caricaStato(); renderCucina(); }
+    if(e.key === CHIAVE_STATO) renderCucina(); // openOrders già aggiornato dal listener generico qui sopra
   });
 }
 
