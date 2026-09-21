@@ -399,8 +399,9 @@
   .cucina-card{ background:#fff; color:#111; border-radius:16px; padding: 6px 10px 16px; border: 7px solid #2ecc71; }
   .cucina-card.late{ border-color:#e74c3c; }
   .cucina-card.programmato{ border-color:#f39c12; }
-  .cucina-elapsed{ display:flex; justify-content:space-between; align-items:center; font-weight:800; font-size:1.15em; padding: 8px 4px 2px; }
+  .cucina-elapsed{ display:flex; justify-content:space-between; align-items:center; font-weight:800; font-size:1.15em; padding: 8px 4px 2px; gap:8px; }
   .cucina-elapsed .cucina-warn{ color:#c0392b; }
+  .cucina-azioni{ display:flex; gap:8px; }
   .cucina-card .receipt{ width:auto; font-size: 22px; padding: 4px 6px 10px; }
   .cucina-card .r-head{ font-size: 34px; }
   .cucina-card .r-data{ display:none; }
@@ -426,9 +427,16 @@
     font-weight:800; font-size:1em; padding:6px 14px; cursor:pointer;
   }
   .cucina-pronto-btn:hover{ background:#27ae60; }
-  .cucina-overlay .cucina-pronto-btn{
-    font-size:1.5em; padding:18px 22px; border-radius:12px;
-    flex: 1 0 100%; box-sizing:border-box;
+  .cucina-stampa-btn{
+    background:#2980b9; color:#fff; border:none; border-radius:8px;
+    font-weight:800; font-size:1em; padding:6px 14px; cursor:pointer;
+  }
+  .cucina-stampa-btn:hover{ background:#2471a3; }
+  .cucina-overlay .cucina-azioni{
+    flex: 1 0 100%; box-sizing:border-box; gap:12px;
+  }
+  .cucina-overlay .cucina-azioni button{
+    flex:1; font-size:1.25em; padding:16px 14px; border-radius:12px; box-sizing:border-box;
   }
 
   /* OPEN ORDERS BOARD */
@@ -2492,7 +2500,10 @@ function htmlCardCucina(o){
     <div class="cucina-card ${late ? 'late' : ''} ${programmato ? 'programmato' : ''}" data-numero="${o.numero}">
       <div class="cucina-elapsed">
         <span class="${late ? 'cucina-warn' : ''}">${late ? '⚠️ ' : ''}${Math.floor(minuti)}′ fa</span>
-        <button class="cucina-pronto-btn" data-numero="${o.numero}">✔ Pronto</button>
+        <div class="cucina-azioni">
+          <button class="cucina-stampa-btn" data-numero="${o.numero}">🧾 Scontrino</button>
+          <button class="cucina-pronto-btn" data-numero="${o.numero}">✔ Pronto</button>
+        </div>
       </div>
       ${htmlComandaCucina(o)}
     </div>`;
@@ -2552,6 +2563,12 @@ function segnaOrdinePronto(numero){
   renderCucina(); // l'overlay si chiude da solo perché non è più da preparare
 }
 document.getElementById('cucinaGrid').addEventListener('click', (e) => {
+  const stampaBtn = e.target.closest('.cucina-stampa-btn');
+  if(stampaBtn){
+    const ordine = openOrders.find(o => o.numero === parseInt(stampaBtn.dataset.numero));
+    if(ordine) stampaOrdine('cliente', ordine);
+    return;
+  }
   const fattoBtn = e.target.closest('.cucina-pronto-btn');
   if(fattoBtn){ segnaOrdinePronto(parseInt(fattoBtn.dataset.numero)); return; }
   const card = e.target.closest('.cucina-card');
@@ -2560,6 +2577,12 @@ document.getElementById('cucinaGrid').addEventListener('click', (e) => {
   renderCucina();
 });
 document.getElementById('cucinaOverlay').addEventListener('click', (e) => {
+  const stampaBtn = e.target.closest('.cucina-stampa-btn');
+  if(stampaBtn){
+    const ordine = openOrders.find(o => o.numero === parseInt(stampaBtn.dataset.numero));
+    if(ordine) stampaOrdine('cliente', ordine);
+    return;
+  }
   const fattoBtn = e.target.closest('.cucina-pronto-btn');
   if(fattoBtn){ segnaOrdinePronto(parseInt(fattoBtn.dataset.numero)); return; }
   const card = e.target.closest('.cucina-card');
