@@ -408,6 +408,16 @@
   .cucina-card .r-cat{ font-size: 20px; margin: 12px 0 6px; }
   .cucina-card .r-row{ padding: 5px 0; }
   .cucina-card .r-note{ font-size: 16px; }
+  .cucina-card .r-row.gia-fatta{ text-decoration: line-through; opacity: .45; }
+  .cucina-card .r-row.gia-fatta + .r-note{ text-decoration: line-through; opacity: .45; }
+  .cucina-card .r-row.riga-nuova{
+    background: #fff6d8; border-left: 6px solid #f1c40f;
+    padding-left: 10px; margin-left: -10px; border-radius: 4px;
+  }
+  .cucina-card .r-aggiornato-tag{
+    display:inline-block; background:#f1c40f; color:#3a2e00; font-weight:800;
+    font-size:0.7em; padding:2px 8px; border-radius:6px; margin-left:8px; vertical-align:middle;
+  }
   .cucina-vuota{ text-align:center; font-size:1.8em; opacity:.55; margin-top: 100px; }
   .cucina-card{ cursor:pointer; }
   .cucina-overlay{
@@ -1343,13 +1353,42 @@ function renderCurrent(){
 // ---------------------------------------------------------------------
 // Genera l'HTML della comanda cucina (senza prezzi) per un ordine
 // {numero, orario, voci:[{catId, qty, extra, prezzoManuale}]}
-function htmlComandaCucina(ordine){
+// Confronta le voci attuali di un ordine con l'istantanea di quelle già
+// fatte (presa l'ultima volta che è stato segnato "pronto" in cucina) e
+// restituisce, per ciascuna voce, quante unità sono già state preparate
+// e quante sono nuove/da fare. Abbina le voci per tipo+variazione+prezzo,
+// così se un tavolo aggiunge un'altra pizza uguale a una già fatta, solo
+// la quantità in più risulta "nuova".
+function calcolaVociConStato(voci, vociPronte){
+  if(!vociPronte || vociPronte.length === 0){
+    return voci.map(v => ({ ...v, giaFatte: 0, nuove: v.qty }));
+  }
+  const chiave = v => [v.catId, JSON.stringify(v.extra || null), v.prezzoManuale ?? '', v.supplLattosio || 0].join('|');
+  const disponibili = {};
+  vociPronte.forEach(v => { const k = chiave(v); disponibili[k] = (disponibili[k] || 0) + v.qty; });
+  return voci.map(v => {
+    const k = chiave(v);
+    const scorta = disponibili[k] || 0;
+    const giaFatte = Math.min(scorta, v.qty);
+    disponibili[k] = scorta - giaFatte;
+    return { ...v, giaFatte, nuove: v.qty - giaFatte };
+  });
+}
+
+// Genera l'HTML della comanda cucina (senza prezzi) per un ordine
+// {numero, orario, voci:[{catId, qty, extra, prezzoManuale}]}. Se si passa
+// vociPronte (l'istantanea di ciò che era già stato fatto), le unità già
+// preparate vengono mostrate barrate e quelle aggiunte dopo evidenziate,
+// invece di ripresentare tutta la comanda come se fosse tutta da rifare.
+function htmlComandaCucina(ordine, vociPronte){
   // Le bibite non vanno in cucina: escono solo sullo scontrino cliente.
   const vociCucina = ordine.voci.filter(v => prod(v.catId).category !== '🍺 Bevande');
+  const conStato = vociPronte ? calcolaVociConStato(vociCucina, vociPronte.filter(v => prod(v.catId).category !== '🍺 Bevande')) : null;
   const categorie = [...new Set(vociCucina.map(v => prod(v.catId).category))];
+  const cAggiornato = vociPronte ? '<span class="r-aggiornato-tag">✏️ Aggiornato</span>' : '';
   return `
     <div class="receipt">
-      <div class="r-head">N.${String(ordine.numero).padStart(3,'0')} &nbsp; ${fmtOra(ordine.orario)}</div>
+      <div class="r-head">N.${String(ordine.numero).padStart(3,'0')} &nbsp; ${fmtOra(ordine.orario)}${cAggiornato}</div>
       <div class="r-data">${fmtData(ordine.orario)}</div>
       ${ordine.tavolo ? `<div class="r-cliente">Tavolo ${ordine.tavolo}</div>` : ''}
       ${ordine.nomeCliente ? `<div class="r-cliente">👤 ${ordine.nomeCliente}</div>` : ''}
@@ -1358,9 +1397,23 @@ function htmlComandaCucina(ordine){
       <hr>
       ${categorie.map(cat => `
         <div class="r-cat">${cat}</div>
-        ${vociCucina.filter(v => prod(v.catId).category === cat).map(v => {
+        ${(conStato || vociCucina.filter(v => prod(v.catId).category === cat)).filter(v => prod(v.catId).category === cat).map(v => {
           const p = prod(v.catId);
-          return `<div class="r-row"><span>${v.qty} ${p.base}</span></div>${p.note ? `<div class="r-note">- ${p.note}</div>` : ''}${noteLineaCucina(v).map(g => `<div class="r-note">- ${g}</div>`).join('')}`;
+          const note = noteLineaCucina(v).map(g => `<div class="r-note">- ${g}</div>`).join('');
+          if(!conStato || (v.giaFatte === 0 && v.nuove === v.qty)){
+            // nessuna voce fatta in precedenza per questa riga: mostra normale
+            // (evidenziata solo se l'intero ordine è un aggiornamento e questa riga è tutta nuova)
+            const nuova = conStato ? ' riga-nuova' : '';
+            return `<div class="r-row${nuova}"><span>${v.qty} ${p.base}</span></div>${p.note ? `<div class="r-note">- ${p.note}</div>` : ''}${note}`;
+          }
+          let righe = '';
+          if(v.giaFatte > 0){
+            righe += `<div class="r-row gia-fatta"><span>${v.giaFatte} ${p.base}</span></div>${p.note ? `<div class="r-note">- ${p.note}</div>` : ''}${note}`;
+          }
+          if(v.nuove > 0){
+            righe += `<div class="r-row riga-nuova"><span>${v.nuove} ${p.base}</span></div>${p.note ? `<div class="r-note">- ${p.note}</div>` : ''}${note}`;
+          }
+          return righe;
         }).join('')}
       `).join('')}
     </div>`;
@@ -2515,7 +2568,7 @@ function htmlCardCucina(o){
           <button class="cucina-pronto-btn" data-numero="${o.numero}">✔ Pronto</button>
         </div>
       </div>
-      ${htmlComandaCucina(o)}
+      ${htmlComandaCucina(o, o.vociPronte)}
     </div>`;
 }
 
@@ -2561,15 +2614,19 @@ function segnaOrdinePronto(numero){
   // l'ordine che la cassa sta eventualmente scrivendo in quel momento.
   // Non lo elimina: resta evidenziato sulla bacheca della cassa finché
   // non viene incassato e chiuso da lì con "Ordine servito".
+  // Salviamo anche un'istantanea delle voci appena preparate (vociPronte):
+  // se in seguito viene aggiunto qualcosa, la prossima volta che l'ordine
+  // torna in coda potremo mostrare barrato ciò che era già stato fatto ed
+  // evidenziare solo ciò che è nuovo, invece di ripresentare tutto da capo.
   try{
     const raw = localStorage.getItem(CHIAVE_STATO);
     if(raw){
       const stato = JSON.parse(raw);
-      stato.openOrders = (stato.openOrders || []).map(o => o.numero === numero ? { ...o, pronto: true } : o);
+      stato.openOrders = (stato.openOrders || []).map(o => o.numero === numero ? { ...o, pronto: true, vociPronte: JSON.parse(JSON.stringify(o.voci)) } : o);
       localStorage.setItem(CHIAVE_STATO, JSON.stringify(stato));
     }
   } catch(e){ /* memoria locale non disponibile */ }
-  openOrders = openOrders.map(o => o.numero === numero ? { ...o, pronto: true } : o);
+  openOrders = openOrders.map(o => o.numero === numero ? { ...o, pronto: true, vociPronte: JSON.parse(JSON.stringify(o.voci)) } : o);
   renderCucina(); // l'overlay si chiude da solo perché non è più da preparare
 }
 document.getElementById('cucinaGrid').addEventListener('click', (e) => {
