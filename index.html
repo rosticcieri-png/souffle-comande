@@ -1869,15 +1869,25 @@ function finalizzaOrdine(){
   if(editingOrderNumber !== null){
     const ordine = openOrders.find(o => o.numero === editingOrderNumber);
     if(ordine){
+      const eraGiaPronto = !!ordine.pronto;
       ordine.voci = voci;
       ordine.totale = totale;
       ordine.nomeCliente = nomeClienteCorrente.trim() || null;
       ordine.orarioRitiro = orarioRitiroCorrente || null;
       ordine.tavolo = tavoloCorrente || null;
       ordine.noteOrdine = noteOrdineCorrente.trim() || null;
+      // Se l'ordine era già stato segnato "pronto" in cucina e viene
+      // modificato (es. aggiunta una pizza), torna a comparire nella coda
+      // da preparare: altrimenti resterebbe nascosto lì e la cucina non
+      // saprebbe mai che c'è dell'altro da fare.
+      ordine.pronto = false;
       ordineFinale = ordine;
+      annuncio = eraGiaPronto
+        ? `Ordine ${ordineFinale.numero} aggiornato e rimandato in cucina. Nuovo totale ${Math.round(totale)} euro.`
+        : `Ordine ${ordineFinale.numero} aggiornato. Nuovo totale ${Math.round(totale)} euro.`;
+    } else {
+      annuncio = `Ordine ${editingOrderNumber} aggiornato. Nuovo totale ${Math.round(totale)} euro.`;
     }
-    annuncio = `Ordine ${ordineFinale.numero} aggiornato. Nuovo totale ${Math.round(totale)} euro.`;
     uscitaModalitaModifica();
   } else {
     orderCounter += 1;
